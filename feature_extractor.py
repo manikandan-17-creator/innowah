@@ -45,8 +45,8 @@ Feature Vector (31 features total):
     [28] daily_steps_norm          (0–1)
 
     Aggregates [2]:
-    [29] sensor_score              (0–1, 60:40 weighted)
-    [30] cognitive_score           (0–1, 60:40 weighted)
+    [29] sensor_score              (0–1, 40% weighted share)
+    [30] cognitive_score           (0–1, 60% weighted share)
 """
 
 import numpy as np
@@ -194,7 +194,7 @@ class FeatureExtractor:
         # Cognitive score: weighted avg of cognitive features
         cog_score = float(np.mean(sw_features))
 
-        # Final combined score (sensor=60%, cognitive=40%)
+        # Final combined score (sensor=40%, cognitive=60%)
         combined = np.array([sensor_score, cog_score], dtype=np.float32)
 
         feature_vector = np.concatenate([sw_features, hw_features, combined])

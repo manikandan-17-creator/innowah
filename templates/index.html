@@ -232,7 +232,7 @@
                     <div class="result-score-wrap">
                         <div class="result-score-label">ML Prediction</div>
                         <div class="result-score-num" id="final">--</div>
-                        <div class="result-score-unit">Classification Score</div>
+                        <div class="result-score-unit">Dementia Risk Score (%)</div>
                     </div>
 
                     <!-- Risk bar -->
@@ -327,6 +327,73 @@
 
 
 
+
+    <!-- Firebase SDK for direct Firestore reads -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, getDoc }
+            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const _app = initializeApp({
+            apiKey: "AIzaSyDv7BgLJM-xiwv1AWQJGrADRZnemWGgiUI",
+            authDomain: "dementia-screening.firebaseapp.com",
+            projectId: "dementia-screening",
+            storageBucket: "dementia-screening.firebasestorage.app",
+            messagingSenderId: "948621756070",
+            appId: "1:948621756070:web:dc2a7bcc43c1c3557a1667"
+        }, "dashboard-app");
+        const _db = getFirestore(_app);
+
+        /**
+         * Fetch ML prediction data from Firebase for the logged-in user.
+         * Returns { mlPrediction, mlRiskLevel, scores } or null.
+         */
+        window.fetchFirebasePrediction = async function () {
+            const uid = sessionStorage.getItem('nb_uid');
+            if (!uid) return null;
+            try {
+                const snap = await getDoc(doc(_db, 'users', uid));
+                if (!snap.exists()) return null;
+                const data = snap.data();
+                const scores = data.scores || {};
+                return {
+                    mlPrediction: scores.mlPrediction != null ? scores.mlPrediction : null,
+                    mlRiskLevel: scores.mlRiskLevel || null,
+                    memory: scores.memory != null ? scores.memory : null,
+                    nback: scores.nback != null ? scores.nback : null,
+                    questionnaire: scores.questionnaire || null
+                };
+            } catch (e) {
+                console.warn('[Firebase] Could not fetch prediction:', e.message);
+                return null;
+            }
+        };
+
+        // Also try to restore Firebase data to Flask backend on page load
+        (async function restoreFromFirebase() {
+            const uid = sessionStorage.getItem('nb_uid');
+            if (!uid) return;
+            try {
+                const snap = await getDoc(doc(_db, 'users', uid));
+                if (!snap.exists()) return;
+                const userData = snap.data();
+                if (userData.scores) {
+                    await fetch('/save_firebase_scores', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            uid: uid,
+                            name: sessionStorage.getItem('nb_name') || '',
+                            scores: userData.scores
+                        })
+                    }).catch(() => { });
+                    console.log('[Dashboard] Restored Firebase scores to Flask session');
+                }
+            } catch (e) {
+                console.warn('[Dashboard] Firebase restore failed:', e.message);
+            }
+        })();
+    </script>
 
     <script>
         /* ─── Clock ─── */
@@ -432,6 +499,65 @@
             if (rbQuiz) rbQuiz.textContent = quizData.total !== undefined ? quizData.total : '--';
         }
 
+        /* ─── Determine risk label from score ─── */
+        function getRiskLevelFromScore(score) {
+            if (score == null) return null;
+            if (score <= 30) return 'Normal';
+            if (score <= 60) return 'Mild Risk';
+            return 'High Risk';
+        }
+
+        /* ─── Update Risk Display ─── */
+        function updateRiskDisplay(riskScore, riskLevel) {
+            const rEl = document.getElementById('risk');
+            const bar = document.getElementById('risk-bar');
+            const pctEl = document.getElementById('risk-pct');
+            const finEl = document.getElementById('final');
+
+            if (riskScore == null && riskLevel == null) {
+                rEl.innerHTML = '<div class="rp-dot" style="background:#888"></div> Awaiting all assessments';
+                rEl.className = 'risk-pill rp-waiting';
+                bar.style.width = '0%';
+                pctEl.textContent = '–';
+                return;
+            }
+
+            // Show risk score
+            const scoreVal = riskScore != null ? Math.round(riskScore) : '--';
+            if (finEl.textContent !== String(scoreVal)) animNum(finEl, scoreVal);
+
+            // Determine risk level text
+            const level = riskLevel || getRiskLevelFromScore(riskScore);
+            const pctVal = riskScore != null ? Math.round(riskScore) + '%' : '–';
+            pctEl.textContent = pctVal;
+
+            if (level === 'Normal' || level === 'Low Risk') {
+                rEl.innerHTML = '<div class="rp-dot" style="background:var(--teal)"></div> Low Risk — Cognitive function appears normal';
+                rEl.className = 'risk-pill rp-low';
+                bar.style.width = (riskScore != null ? Math.max(riskScore, 10) : 22) + '%';
+                bar.style.background = 'linear-gradient(90deg, var(--teal), var(--teal-light, #5bb8a4))';
+            } else if (level === 'Mild Risk' || level === 'Moderate Risk') {
+                rEl.innerHTML = '<div class="rp-dot" style="background:var(--orange, #e8a848)"></div> Mild Risk — Early signs detected. Improvement suggested.';
+                rEl.className = 'risk-pill rp-mild';
+                bar.style.width = (riskScore != null ? Math.max(riskScore, 25) : 48) + '%';
+                bar.style.background = 'linear-gradient(90deg, var(--orange, #e8a848), #f6d365)';
+            } else if (level === 'High Risk') {
+                rEl.innerHTML = '<div class="rp-dot" style="background:var(--red, #e07a5f)"></div> High Risk — Please consult a medical professional immediately';
+                rEl.className = 'risk-pill rp-high';
+                bar.style.width = (riskScore != null ? Math.max(riskScore, 50) : 88) + '%';
+                bar.style.background = 'linear-gradient(90deg, var(--red, #e07a5f), #fa709a)';
+            } else {
+                rEl.innerHTML = '<div class="rp-dot" style="background:#888"></div> Risk Level: ' + level;
+                rEl.className = 'risk-pill';
+                bar.style.width = (riskScore != null ? riskScore : 0) + '%';
+                pctEl.textContent = pctVal;
+            }
+        }
+
+        /* ─── Firebase fallback state ─── */
+        let firebaseFetched = false;
+        let cachedFirebaseData = null;
+
         /* ─── Main fetch ─── */
         async function loadScores() {
             try {
@@ -444,13 +570,15 @@
                 const nbEl = document.getElementById('nback');
                 const finEl = document.getElementById('final');
 
+                const clinical = c.clinical_result; // Full ML assessment
                 const mv = (c.memory != null) ? c.memory : '--';
                 const nv = (c.nback != null) ? c.nback : '--';
-                const fv = (c.ml_prediction != null) ? c.ml_prediction : '--';
+
+                // Check if all 3 assessments are complete
+                const hasAllAssessments = (c.memory != null) && (c.nback != null) && (c.questionnaire != null && c.questionnaire.total != null);
 
                 if (memEl.textContent !== String(mv)) animNum(memEl, mv);
                 if (nbEl.textContent !== String(nv)) animNum(nbEl, nv);
-                if (finEl.textContent !== String(fv)) animNum(finEl, fv);
 
                 /* Mini summary */
                 const rbMem = document.getElementById('rb-memory');
@@ -462,37 +590,83 @@
                 setRing('rp-memory', 'rc-memory', c.memory, 100);
                 setRing('rp-nback', 'rc-nback', c.nback, 100);
 
-                /* Questionnaire data — expects c.questionnaire = { total, memory, orientation, language, attention } */
                 updateQuizCard(c.questionnaire || null);
 
-                /* Risk pill + bar */
-                const rEl = document.getElementById('risk');
-                const bar = document.getElementById('risk-bar');
-                const pctEl = document.getElementById('risk-pct');
+                /* ─── ML Prediction & Risk Level ─── */
+                let riskScore = null;
+                let riskLevel = null;
+                let hasClinical = false;
 
-                if (c.ml_prediction === 0) {
-                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--teal)"></div> Low Risk — Cognitive function appears normal';
-                    rEl.className = 'risk-pill rp-low';
-                    bar.style.width = '22%';
-                    bar.style.background = 'linear-gradient(90deg, var(--teal), var(--teal-light))';
-                    pctEl.textContent = '22%';
-                } else if (c.ml_prediction === 1) {
-                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--amber)"></div> Moderate Risk — Some areas may need attention';
-                    rEl.className = 'risk-pill rp-moderate';
-                    bar.style.width = '60%';
-                    bar.style.background = 'linear-gradient(90deg, var(--amber), #e8b050)';
-                    pctEl.textContent = '60%';
-                } else if (c.ml_prediction === 2) {
-                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--coral)"></div> High Risk — We recommend speaking to a clinician';
-                    rEl.className = 'risk-pill rp-high';
-                    bar.style.width = '90%';
-                    bar.style.background = 'linear-gradient(90deg, var(--coral), var(--coral-light))';
-                    pctEl.textContent = '90%';
+                // First: try backend clinical_result
+                if (hasAllAssessments && clinical && clinical.score != null) {
+                    riskScore = clinical.score;
+                    riskLevel = clinical.label || null;
+                    hasClinical = true;
+                }
+
+                // Fallback: try Firebase directly (only fetch once to avoid spamming)
+                if (!hasClinical && hasAllAssessments && !firebaseFetched) {
+                    firebaseFetched = true;
+                    if (window.fetchFirebasePrediction) {
+                        try {
+                            const fbData = await window.fetchFirebasePrediction();
+                            if (fbData && fbData.mlPrediction != null) {
+                                cachedFirebaseData = fbData;
+                                riskScore = fbData.mlPrediction;
+                                riskLevel = fbData.mlRiskLevel || getRiskLevelFromScore(riskScore);
+                                hasClinical = true;
+                                console.log('[Dashboard] Using Firebase ML prediction:', riskScore, riskLevel);
+
+                                // Also push back to Flask session for subsequent polls
+                                fetch('/save_firebase_scores', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        uid: sessionStorage.getItem('nb_uid') || '',
+                                        name: sessionStorage.getItem('nb_name') || '',
+                                        scores: {
+                                            memory: fbData.memory,
+                                            nback: fbData.nback,
+                                            questionnaire: fbData.questionnaire,
+                                            mlPrediction: fbData.mlPrediction,
+                                            mlRiskLevel: fbData.mlRiskLevel
+                                        }
+                                    })
+                                }).catch(() => { });
+                            }
+                        } catch (e) {
+                            console.warn('[Dashboard] Firebase fallback failed:', e);
+                        }
+                    }
+                }
+
+                // Use cached Firebase data if backend still doesn't have it
+                if (!hasClinical && hasAllAssessments && cachedFirebaseData) {
+                    riskScore = cachedFirebaseData.mlPrediction;
+                    riskLevel = cachedFirebaseData.mlRiskLevel || getRiskLevelFromScore(riskScore);
+                    hasClinical = true;
+                }
+
+                // Display ML prediction score
+                if (hasAllAssessments && hasClinical) {
+                    const scoreDisplay = riskScore != null ? Math.round(riskScore) : '--';
+                    if (finEl.textContent !== String(scoreDisplay)) animNum(finEl, scoreDisplay);
+                    updateRiskDisplay(riskScore, riskLevel);
+                } else if (!hasAllAssessments) {
+                    if (finEl.textContent !== '--') animNum(finEl, '--');
+                    updateRiskDisplay(null, null);
                 } else {
-                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--text-light)"></div> Awaiting all assessments';
+                    // All assessments done but no ML prediction yet — show awaiting ML
+                    if (finEl.textContent !== '--') animNum(finEl, '--');
+                    const rEl = document.getElementById('risk');
+                    const bar = document.getElementById('risk-bar');
+                    const pctEl = document.getElementById('risk-pct');
+                    rEl.innerHTML = '<div class="rp-dot" style="background:#888"></div> Processing ML prediction...';
                     rEl.className = 'risk-pill rp-waiting';
                     bar.style.width = '0%';
                     pctEl.textContent = '–';
+                    // Reset firebase flag so it tries again next cycle
+                    firebaseFetched = false;
                 }
 
                 /* Progress banner */

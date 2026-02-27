@@ -1907,53 +1907,51 @@
             saveScores({ mlPrediction: res.mlPrediction });
           });
         }
+
+        // ═══════ SEND TO RENDER ML MODEL ═══════
+        // Done sequentially to avoid Flask session write race conditions
+        const deviceId = sessionStorage.getItem('nb_device_id') || '';
+        const payload = { ...softwareFeatures, device_id: deviceId };
+        const renderApiUrl = '/api/render_predict'; // routes through app.py
+
+        fetch(renderApiUrl, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(v => v.json()).then(mlRes => {
+          console.log('[ML] Render prediction (device:', deviceId, ', hw_used:', mlRes.hardware_used, '):', mlRes);
+
+          // Use Render result if available, otherwise use local fallback
+          const prediction = mlRes.used_render ? mlRes.render_result : mlRes.local_result;
+          if (!prediction) return;
+
+          // Add ML prediction flag to the results page
+          const mlFlag = document.createElement('div');
+          mlFlag.className = 'fi fi-' + (prediction.risk_level === 'Normal' ? 'ok' : prediction.risk_level === 'Mild Risk' ? 'warn' : 'alert');
+          mlFlag.innerHTML = `<span>🤖</span><span><strong>ML Model Prediction:</strong> ${prediction.risk_level} (Risk Score: ${prediction.risk_score}/100). Method: ${prediction.method || (mlRes.used_render ? 'Render API' : 'Local Engine')}. ${prediction.recommendation || ''}</span>`;
+          document.getElementById('flags-list').appendChild(mlFlag);
+
+          // Add domain score cards from ML
+          if (prediction.domain_scores) {
+            const domColors = { memory: 'plum', reasoning: 'amber', visuospatial: 'sage', language: 'teal', behavior: 'coral' };
+            const domGrid = document.getElementById('scores-grid');
+            Object.entries(prediction.domain_scores).forEach(([dom, score]) => {
+              const dc = document.createElement('div'); dc.className = 'sc';
+              dc.style.borderColor = 'rgba(124,95,138,.2)';
+              dc.innerHTML = `<div class="sc-lbl">ML: ${dom.charAt(0).toUpperCase() + dom.slice(1)}</div><div class="sc-val" style="color:${colors[domColors[dom]] || 'var(--plum)'}">${score}<span style="font-size:13px;color:var(--txt-l);font-family:'Plus Jakarta Sans',sans-serif"> /100</span></div><div class="sc-bar"><div class="sc-bar-fill" style="background:${colors[domColors[dom]] || 'var(--plum)'};width:${Math.min(score, 100)}%"></div></div>`;
+              domGrid.appendChild(dc);
+            });
+          }
+
+          // Save ML prediction via promise (always resolves)
+          window._fbReady.then(function (saveScores) {
+            saveScores({
+              mlPrediction: prediction.risk_score,
+              mlRiskLevel: prediction.risk_level
+            });
+          });
+        }).catch(err => { console.warn('[ML] Render predict failed:', err); });
+
       }).catch(() => { });
-
-      // ═══════ SEND TO RENDER ML MODEL ═══════
-      // device_id is registered at signup and linked to the user's ESP32
-      const deviceId = sessionStorage.getItem('nb_device_id') || '';
-      const payload = { ...softwareFeatures, device_id: deviceId };
-
-      // Change this to your deployed Render URL when ready
-      // example: 'https://innowah-ml-api.onrender.com/predict_raw'
-      const renderApiUrl = '/api/render_predict'; // routes through app.py
-
-      fetch(renderApiUrl, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(v => v.json()).then(mlRes => {
-        console.log('[ML] Render prediction (device:', deviceId, ', hw_used:', mlRes.hardware_used, '):', mlRes);
-
-        // Use Render result if available, otherwise use local fallback
-        const prediction = mlRes.used_render ? mlRes.render_result : mlRes.local_result;
-        if (!prediction) return;
-
-        // Add ML prediction flag to the results page
-        const mlFlag = document.createElement('div');
-        mlFlag.className = 'fi fi-' + (prediction.risk_level === 'Normal' ? 'ok' : prediction.risk_level === 'Mild Risk' ? 'warn' : 'alert');
-        mlFlag.innerHTML = `<span>🤖</span><span><strong>ML Model Prediction:</strong> ${prediction.risk_level} (Risk Score: ${prediction.risk_score}/100). Method: ${prediction.method || (mlRes.used_render ? 'Render API' : 'Local Engine')}. ${prediction.recommendation || ''}</span>`;
-        document.getElementById('flags-list').appendChild(mlFlag);
-
-        // Add domain score cards from ML
-        if (prediction.domain_scores) {
-          const domColors = { memory: 'plum', reasoning: 'amber', visuospatial: 'sage', language: 'teal', behavior: 'coral' };
-          const domGrid = document.getElementById('scores-grid');
-          Object.entries(prediction.domain_scores).forEach(([dom, score]) => {
-            const dc = document.createElement('div'); dc.className = 'sc';
-            dc.style.borderColor = 'rgba(124,95,138,.2)';
-            dc.innerHTML = `<div class="sc-lbl">ML: ${dom.charAt(0).toUpperCase() + dom.slice(1)}</div><div class="sc-val" style="color:${colors[domColors[dom]] || 'var(--plum)'}">${score}<span style="font-size:13px;color:var(--txt-l);font-family:'Plus Jakarta Sans',sans-serif"> /100</span></div><div class="sc-bar"><div class="sc-bar-fill" style="background:${colors[domColors[dom]] || 'var(--plum)'};width:${Math.min(score, 100)}%"></div></div>`;
-            domGrid.appendChild(dc);
-          });
-        }
-
-        // Save ML prediction via promise (always resolves)
-        window._fbReady.then(function (saveScores) {
-          saveScores({
-            mlPrediction: prediction.risk_score,
-            mlRiskLevel: prediction.risk_level
-          });
-        });
-      }).catch(err => { console.warn('[ML] Render predict failed:', err); });
     }
 
     /* ═══════ CONFETTI ═══════ */

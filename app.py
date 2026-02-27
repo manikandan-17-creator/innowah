@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 # ── Render ML API URL (replace with actual URL when deployed) ─────────────────
-RENDER_API_URL = os.environ.get("RENDER_API_URL", "https://your-app-name.onrender.com/predict")
+RENDER_API_URL = os.environ.get("RENDER_API_URL", "https://innowah-ml-api.onrender.com/predict")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # LOAD MODELS
@@ -55,7 +55,10 @@ def get_session_scores():
             "nback":         None,
             "final":         None,
             "ml_prediction": None,
-            "questionnaire": None
+            "questionnaire": None,
+            "reaction_time_ms": 700,
+            "error_consistency_norm": 0.2,
+            "clinical_result": None  # Stores {level_idx, label, score, recommendation}
         }
     return session['cognitive_scores']
 
@@ -115,8 +118,8 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
       [14–17] IMU (4 features)
       [18–22] PPG/HRV (5 features)
       [23–30] EEG (8 features)
-      [31–32] Activity + temperature (2 features)
-      [33–34] Aggregate sensor/cognitive scores (2 features)
+      [29] sensor_score              (0.40 weighted component)
+      [30] cognitive_score           (0.60 weighted component)
     """
     sw  = software_data  or {}
     hw  = hardware_data  or {}
@@ -127,18 +130,30 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
     # ── Software features [0–13] ─────────────────────────────────────────────
     # Map existing cognitive game scores into the vector when available
     scores = get_session_scores()
-    memory_raw = scores["memory"]
-    nback_raw  = scores["nback"]
+    memory_raw = scores.get("memory")
+    nback_raw  = scores.get("nback")
 
-    immediate_recall  = _get(sw, "immediate_recall",  memory_raw if memory_raw is not None else 0.5)
-    delayed_recall    = _get(sw, "delayed_recall",    memory_raw if memory_raw is not None else 0.5)
+    # Ensure memory/nback are 0-1 (they are 0-100 in session)
+    mem_norm = (memory_raw / 100.0) if memory_raw is not None else 0.5
+    nb_norm  = (nback_raw  / 100.0) if nback_raw  is not None else 0.5
+
+    immediate_recall  = _get(sw, "immediate_recall",  mem_norm)
+    delayed_recall    = _get(sw, "delayed_recall",    mem_norm)
     cue_benefit       = _get(sw, "cue_benefit_index", 0.5)
     retention_ratio   = _get(sw, "retention_ratio",   0.5)
     orientation       = _get(sw, "orientation_score", 0.5)
-    serial7s          = _get(sw, "serial7s_score",    nback_raw  if nback_raw  is not None else 0.5)
+    serial7s          = _get(sw, "serial7s_score",    nb_norm)
     clock_drawing     = _get(sw, "clock_drawing_score",0.5)
-    reaction_time     = _norm(_get(sw, "reaction_time_ms", 700), "reaction_time")
-    error_consistency = 1.0 - _get(sw, "error_consistency_norm", 0.2)
+    sw_rt = sw.get("reaction_time_ms", 700)
+    if sw_rt == 700 and scores.get("reaction_time_ms") and scores["reaction_time_ms"] != 700:
+        sw_rt = scores["reaction_time_ms"]
+    reaction_time = _norm(float(sw_rt), "reaction_time")
+
+    sw_ec = sw.get("error_consistency_norm", 0.2)
+    if sw_ec == 0.2 and scores.get("error_consistency_norm") and scores["error_consistency_norm"] != 0.2:
+        sw_ec = scores["error_consistency_norm"]
+    error_consistency = 1.0 - float(sw_ec)
+
     naming_task       = _get(sw, "naming_task_score", 0.5)
     sentence_rep      = _get(sw, "sentence_repetition_score", 0.5)
     verbal_fluency    = _norm(_get(sw, "verbal_fluency_wpm", 12), "verbal_fluency")
@@ -175,7 +190,7 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
         _norm(_get(imu, "step_count",          5000),  "daily_steps"),
     ], dtype=np.float32)
 
-    # ── Aggregate scores [29–30] ─────────────────────────────────────────────
+    # ── Aggregate scores (40:60 rule: sensor 40%, cognitive 60%) ─────────────
     sensor_score    = float(np.mean(hw_vec))
     cognitive_score = float(np.mean(sw_vec))
     agg_vec = np.array([sensor_score, cognitive_score], dtype=np.float32)
@@ -187,26 +202,28 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
 # INNOWAH INFERENCE ENGINE
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Clinical risk rules: (feature_idx, name, normal_threshold, mild_threshold, direction)
+# Clinical risk rules: (feature_idx, name, healthy_threshold, mild_threshold, direction)
+# direction "lower_worse": Level is High if val < mild_threshold, Mild if val < healthy_threshold
+# direction "higher_worse": Level is High if val > mild_threshold, Mild if val > healthy_threshold
 CLINICAL_RULES = [
-    (14, "gait_speed",          0.57, 0.71, "lower_worse"),
-    (15, "stride_variability",  0.70, 0.50, "higher_worse"),
+    (14, "gait_speed",          0.60, 0.45, "lower_worse"),
+    (15, "stride_variability",  0.40, 0.60, "higher_worse"),
     (16, "turning_velocity",    0.55, 0.40, "lower_worse"),
-    (17, "postural_sway",       0.70, 0.50, "higher_worse"),
+    (17, "postural_sway",       0.50, 0.70, "higher_worse"),
     (18, "rmssd",               0.31, 0.19, "lower_worse"),
     (19, "sdnn",                0.30, 0.20, "lower_worse"),
-    (20, "lf_hf_ratio",         0.80, 0.60, "higher_worse"),
+    (20, "lf_hf_ratio",         0.60, 0.80, "higher_worse"),
     (21, "spo2",                0.67, 0.47, "lower_worse"),
     (23, "alpha_power",         0.50, 0.40, "lower_worse"),
-    (24, "theta_power",         0.60, 0.50, "higher_worse"),
-    (25, "delta_power",         0.63, 0.50, "higher_worse"),
+    (24, "theta_power",         0.50, 0.60, "higher_worse"),
+    (25, "delta_power",         0.50, 0.63, "higher_worse"),
     (26, "theta_alpha_ratio",   0.47, 0.57, "higher_worse"),
     (27, "dominant_frequency",  0.57, 0.43, "lower_worse"),
-    (0,  "immediate_recall",    0.70, 0.50, "lower_worse"),
+    (0,  "immediate_recall",    0.75, 0.55, "lower_worse"),
     (1,  "delayed_recall",      0.70, 0.50, "lower_worse"),
     (3,  "retention_ratio",     0.70, 0.50, "lower_worse"),
-    (5,  "serial7s_score",      0.60, 0.40, "lower_worse"),
-    (9,  "naming_task",         0.60, 0.40, "lower_worse"),
+    (5,  "serial7s_score",      0.70, 0.50, "lower_worse"),
+    (9,  "naming_task",         0.70, 0.50, "lower_worse"),
 ]
 
 DOMAIN_INDICES = {
@@ -231,24 +248,30 @@ def run_innowah_inference(feature_vector: np.ndarray) -> dict:
     else:
         # ── Rule-based fallback ────────────────────────────────────────────────
         mild_flags, high_flags = [], []
-        for idx, name, normal_t, mild_t, direction in CLINICAL_RULES:
+        for idx, name, healthy_t, mild_t, direction in CLINICAL_RULES:
             if idx >= len(fv):
                 continue
             val = fv[idx]
             if direction == "lower_worse":
-                if val < mild_t:    high_flags.append(name)
-                elif val < normal_t: mild_flags.append(name)
+                if val < mild_t:      high_flags.append(name)
+                elif val < healthy_t: mild_flags.append(name)
             else:
-                if val > mild_t:    high_flags.append(name)
-                elif val > normal_t: mild_flags.append(name)
+                if val > mild_t:      high_flags.append(name)
+                elif val > healthy_t: mild_flags.append(name)
 
         n = len(CLINICAL_RULES)
-        raw = (len(mild_flags) * 30 + len(high_flags) * 60) / n
-        # Apply 60:40 weighting: sensor 60%, cognitive 40%
+        # Risk score calculation: scale based on flags triggered
+        risk_score = (len(mild_flags) * 20 + len(high_flags) * 50) / n * 10 
+        risk_score = min(100.0, max(0.0, risk_score)) # Clamp
+        
+        # Use health-based fallback (Sensor: 40%, Cognitive: 60%)
         sensor_health  = float(fv[29])
         cog_health     = float(fv[30])
-        risk_score     = min(100.0, (1 - sensor_health) * 0.60 * 100 +
-                                    (1 - cog_health)    * 0.40 * 100)
+        health_score   = (sensor_health * 0.40 + cog_health * 0.60) * 100
+        risk_score_h   = 100.0 - health_score
+        
+        # Combine flag-based and health-based (max for safety)
+        risk_score = max(risk_score, risk_score_h)
         risk_level     = ("High Risk" if risk_score >= 50 else
                           "Mild Risk" if risk_score >= 25 else "Normal")
         method         = "rule_based_clinical"
@@ -310,6 +333,12 @@ def dashboard():
 
 @app.route("/memory")
 def memory_card():
+    scores = get_session_scores()
+    # Reset full assessment if a previous clinical result exists (starting fresh)
+    if scores.get("clinical_result") is not None:
+        for k in ["memory", "nback", "final", "ml_prediction", "questionnaire", "clinical_result"]:
+            scores[k] = None
+        save_session_scores(scores)
     return render_template("memory.html")
 
 
@@ -340,6 +369,10 @@ def update_scores():
         scores["nback"] = data["nback_score"]
     if "questionnaire" in data:
         scores["questionnaire"] = data["questionnaire"]
+    if "reaction_time_ms" in data:
+        scores["reaction_time_ms"] = data["reaction_time_ms"]
+    if "error_consistency_norm" in data:
+        scores["error_consistency_norm"] = data["error_consistency_norm"]
 
     response_data = {"status": "ok"}
 
@@ -349,19 +382,28 @@ def update_scores():
             scores["final"] = round(
                 (scores["memory"] + scores["nback"]) / 2, 2
             )
+            # This is the Game Performance Model (Local)
             features = np.array([[
                 scores["memory"],
                 scores["nback"],
                 scores["final"]
             ]])
             prediction = model.predict(features)
-            scores["ml_prediction"] = int(prediction[0])
-            response_data["mlPrediction"] = int(prediction[0])
+            game_pred = int(prediction[0])
+            
+            # If we don't have a full clinical result yet, use this as a fallback
+            if scores.get("clinical_result") is None:
+                scores["ml_prediction"] = game_pred
+                response_data["mlPrediction"] = game_pred
+            else:
+                # Keep the clinical level in sync
+                scores["ml_prediction"] = scores["clinical_result"].get("level_idx", game_pred)
+                response_data["mlPrediction"] = scores["ml_prediction"]
+
         except Exception as e:
-            logger.warning(f"[update_scores] model.predict failed: {e}. Skipping ML prediction.")
+            logger.warning(f"[update_scores] local model predict failed: {e}")
 
     save_session_scores(scores)
-    logger.info(f"Updated session scores: {scores}")
     return jsonify(response_data)
 
 
@@ -374,13 +416,34 @@ def save_firebase_scores():
     if incoming.get("memory")       is not None: scores["memory"]        = incoming["memory"]
     if incoming.get("nback")        is not None: scores["nback"]         = incoming["nback"]
     if incoming.get("questionnaire") is not None: scores["questionnaire"] = incoming["questionnaire"]
-    if incoming.get("mlPrediction") is not None: scores["ml_prediction"] = incoming["mlPrediction"]
+    
+    # Restore ML prediction / clinical result from Firebase
+    if incoming.get("mlPrediction") is not None:
+        risk_score = incoming.get("mlPrediction")
+        risk_level = incoming.get("mlRiskLevel", "Normal")
+        level_map = {"Normal": 0, "Mild Risk": 1, "High Risk": 2}
+        
+        scores["clinical_result"] = {
+            "score": float(risk_score),
+            "label": risk_level,
+            "level_idx": level_map.get(risk_level, 0),
+            "recommendation": ""
+        }
+        scores["ml_prediction"] = level_map.get(risk_level, 0)
 
     session["user_uid"]  = data.get("uid",  "")
     session["user_name"] = data.get("name", "")
 
     save_session_scores(scores)
-    logger.info(f"[Firebase sync] session scores received")
+    logger.info(f"[Firebase sync] session scores received and restored.")
+    return jsonify({"status": "ok"})
+
+@app.route("/api/clear_session", methods=["POST"])
+def clear_session():
+    scores = get_session_scores()
+    for k in ["memory", "nback", "final", "ml_prediction", "questionnaire", "clinical_result"]:
+        scores[k] = None
+    save_session_scores(scores)
     return jsonify({"status": "ok"})
 
 
@@ -755,7 +818,7 @@ def render_predict():
         resp = requests.post(
             RENDER_API_URL,
             json={"features": fv_list},
-            timeout=15
+            timeout=30
         )
         if resp.status_code == 200:
             render_result = resp.json()
@@ -767,6 +830,39 @@ def render_predict():
 
     # ── Fallback: local inference ──────────────────────────────────────
     local_result = run_innowah_inference(fv)
+
+    # ── Apply 0.6 multiplier to risk scores ────────────────────────────
+    if render_result and "risk_score" in render_result:
+        render_result["risk_score"] = round(render_result["risk_score"] * 0.6, 2)
+    
+    if local_result and "risk_score" in local_result:
+        local_result["risk_score"] = round(local_result["risk_score"] * 0.6, 2)
+
+    # ── Update session scores for dashboard ────────────────────────────
+    # Use render result if available, otherwise local result
+    prediction = render_result if render_result else local_result
+    
+    if prediction:
+        scores = get_session_scores()
+        
+        # Map risk_level to 0, 1, 2
+        level_map = {"Normal": 0, "Mild Risk": 1, "High Risk": 2}
+        risk_level_str = prediction.get("risk_level", "Normal")
+        level_idx = level_map.get(risk_level_str, 0)
+        
+        # Save full clinical assessment
+        scores["clinical_result"] = {
+            "level_idx": level_idx,
+            "label":     risk_level_str,
+            "score":     prediction.get("risk_score", 0.0),
+            "recommendation": prediction.get("recommendation", "")
+        }
+        
+        # Overwrite the simpler ml_prediction so dashboard pill updates
+        scores["ml_prediction"] = level_idx
+        
+        save_session_scores(scores)
+        logger.info(f"[Render Predict] Finalized clinical result: {scores['clinical_result']}")
 
     return jsonify({
         "status":          "ok",

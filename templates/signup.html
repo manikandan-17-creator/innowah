@@ -343,6 +343,9 @@
                 sessionStorage.setItem('nb_name', name);
                 if (deviceId) sessionStorage.setItem('nb_device_id', deviceId);
 
+                /* Clear local python session so previous user's scores don't show */
+                await fetch('/api/clear_session', { method: 'POST' }).catch(() => { });
+
                 showAlert('signup', `Welcome, ${name}! Account created successfully.`, 'success');
                 showToast(`Welcome aboard, ${name.split(' ')[0]}! 🎉`);
 
@@ -396,17 +399,15 @@
 
                 /* If stored scores exist, push them back to Flask session */
                 if (userData.scores) {
-                    const s = userData.scores;
-                    if (s.memory !== null || s.nback !== null) {
-                        await fetch('/update_scores', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                memory_score: s.memory,
-                                nback_score: s.nback
-                            })
-                        }).catch(() => { });
-                    }
+                    await fetch('/save_firebase_scores', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            uid: uid,
+                            name: name,
+                            scores: userData.scores
+                        })
+                    }).catch(() => { });
                 }
 
                 showAlert('signin', `Welcome back, ${name.split(' ')[0]}!`, 'success');
@@ -456,6 +457,7 @@
                 if (scoreData.nback !== undefined) updates['scores.nback'] = scoreData.nback;
                 if (scoreData.questionnaire !== undefined) updates['scores.questionnaire'] = scoreData.questionnaire;
                 if (scoreData.mlPrediction !== undefined) updates['scores.mlPrediction'] = scoreData.mlPrediction;
+                if (scoreData.mlRiskLevel !== undefined) updates['scores.mlRiskLevel'] = scoreData.mlRiskLevel;
                 updates['scores.lastUpdated'] = serverTimestamp();
 
                 const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
