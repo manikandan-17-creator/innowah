@@ -47,14 +47,21 @@ else:
 # STORE SCORES
 # ══════════════════════════════════════════════════════════════════════════════
 
-# ── Original cognitive game scores ────────────────────────────────────────────
-cognitive_scores = {
-    "memory":        None,
-    "nback":         None,
-    "final":         None,
-    "ml_prediction": None,
-    "questionnaire": None
-}
+# ── Session Score Initialization Utilities ────────────────────────────────────
+def get_session_scores():
+    if 'cognitive_scores' not in session:
+        session['cognitive_scores'] = {
+            "memory":        None,
+            "nback":         None,
+            "final":         None,
+            "ml_prediction": None,
+            "questionnaire": None
+        }
+    return session['cognitive_scores']
+
+def save_session_scores(scores):
+    session['cognitive_scores'] = scores
+    session.modified = True
 
 # ── INNOWAH hardware session store (device_id → list of ESP32 readings) ───────
 hardware_sessions = {}   # { "ESP32_INNOWAH_001": [ {...}, {...} ] }
@@ -322,62 +329,63 @@ def signup():
 
 @app.route("/update_scores", methods=["POST"])
 def update_scores():
-    global cognitive_scores
+    scores = get_session_scores()
     data = request.get_json(force=True)
-    print("Received scores:", data)
+    logger.info(f"Received scores: {data}")
 
     if "memory_score" in data:
-        cognitive_scores["memory"] = data["memory_score"]
+        scores["memory"] = data["memory_score"]
     if "nback_score" in data:
-        cognitive_scores["nback"] = data["nback_score"]
+        scores["nback"] = data["nback_score"]
     if "questionnaire" in data:
-        cognitive_scores["questionnaire"] = data["questionnaire"]
+        scores["questionnaire"] = data["questionnaire"]
 
     response_data = {"status": "ok"}
 
     # Only attempt ML prediction when both game scores are present
-    if cognitive_scores["memory"] is not None and cognitive_scores["nback"] is not None:
+    if scores["memory"] is not None and scores["nback"] is not None:
         try:
-            cognitive_scores["final"] = round(
-                (cognitive_scores["memory"] + cognitive_scores["nback"]) / 2, 2
+            scores["final"] = round(
+                (scores["memory"] + scores["nback"]) / 2, 2
             )
             features = np.array([[
-                cognitive_scores["memory"],
-                cognitive_scores["nback"],
-                cognitive_scores["final"]
+                scores["memory"],
+                scores["nback"],
+                scores["final"]
             ]])
             prediction = model.predict(features)
-            cognitive_scores["ml_prediction"] = int(prediction[0])
+            scores["ml_prediction"] = int(prediction[0])
             response_data["mlPrediction"] = int(prediction[0])
         except Exception as e:
             logger.warning(f"[update_scores] model.predict failed: {e}. Skipping ML prediction.")
-            # Still return ok so frontend Firebase save always fires
 
-    print("Updated cognitive_scores:", cognitive_scores)
+    save_session_scores(scores)
+    logger.info(f"Updated session scores: {scores}")
     return jsonify(response_data)
 
 
 @app.route("/save_firebase_scores", methods=["POST"])
 def save_firebase_scores():
-    global cognitive_scores
+    scores = get_session_scores()
     data   = request.get_json(force=True)
-    scores = data.get("scores", {})
+    incoming = data.get("scores", {})
 
-    if scores.get("memory")       is not None: cognitive_scores["memory"]        = scores["memory"]
-    if scores.get("nback")        is not None: cognitive_scores["nback"]         = scores["nback"]
-    if scores.get("questionnaire") is not None: cognitive_scores["questionnaire"] = scores["questionnaire"]
-    if scores.get("mlPrediction") is not None: cognitive_scores["ml_prediction"] = scores["mlPrediction"]
+    if incoming.get("memory")       is not None: scores["memory"]        = incoming["memory"]
+    if incoming.get("nback")        is not None: scores["nback"]         = incoming["nback"]
+    if incoming.get("questionnaire") is not None: scores["questionnaire"] = incoming["questionnaire"]
+    if incoming.get("mlPrediction") is not None: scores["ml_prediction"] = incoming["mlPrediction"]
 
     session["user_uid"]  = data.get("uid",  "")
     session["user_name"] = data.get("name", "")
 
-    print("[Firebase sync] Scores received:", cognitive_scores)
+    save_session_scores(scores)
+    logger.info(f"[Firebase sync] session scores received")
     return jsonify({"status": "ok"})
 
 
 @app.route("/get_data")
 def get_data():
-    return jsonify({"cognitive": cognitive_scores})
+    return jsonify({"cognitive": get_session_scores()})
 
 
 @app.route("/evaluate-fold", methods=["POST"])

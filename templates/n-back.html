@@ -123,18 +123,16 @@
                     <div class="letter-box idle" id="letter-box">?</div>
                 </div>
 
-                <!-- Previous letter row -->
-                <div class="prev-letter-row">
-                    <span class="prev-label">Previous</span>
-                    <span class="prev-letter-display" id="prev-display">–</span>
-                    <span class="prev-hint" id="prev-hint">Waiting for first letter…</span>
+                <!-- Previous letter row (Hidden for challenge) -->
+                <div class="prev-letter-row" style="display: none;">
+                    <span class="prev-letter-display" id="prev-display"></span>
+                    <span class="prev-hint" id="prev-hint"></span>
                 </div>
 
                 <!-- Match button -->
                 <div class="match-btn-wrap">
                     <button class="btn-match" id="match-btn" onclick="handleMatch()" disabled>
                         🎯 MATCH
-                        <div class="btn-match-sub">Press when letters repeat</div>
                     </button>
                 </div>
 
@@ -389,11 +387,7 @@
             letterShownAt = performance.now(); // record when letter appeared
             setTimeout(() => box.classList.remove('new-letter'), 350);
 
-            // Update previous indicator
-            document.getElementById('prev-display').textContent = prev || '–';
-            document.getElementById('prev-hint').textContent = prev
-                ? (prev === curr ? '⚡ Same letter! Press MATCH' : 'Different — don\'t press')
-                : 'No previous letter yet';
+            // Update trial progress
 
             // Update trial progress
             document.getElementById('stat-trial').textContent = `${trial} / ${TOTAL_TRIALS}`;

@@ -90,7 +90,7 @@ def _get(d, key, default=0.5):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# FEATURE EXTRACTION (same as app.py — builds 35-dim vector from raw params)
+# FEATURE EXTRACTION (same as app.py — builds 31-dim vector from raw params)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def extract_features_from_raw(software_data: dict, hardware_data: dict = None) -> np.ndarray:
@@ -275,7 +275,7 @@ def index():
         "status":     "running",
         "model_loaded": innowah_model is not None,
         "endpoints": {
-            "POST /predict":     "Send a 35-dim feature vector for prediction",
+            "POST /predict":     "Send a 31-dim feature vector for prediction",
             "POST /predict_raw": "Send raw software parameters (auto-builds features)",
             "GET  /health":      "Health check",
         },
@@ -286,7 +286,7 @@ def index():
 @app.route("/predict", methods=["POST"])
 def predict():
     """
-    Accepts a pre-computed 35-dim feature vector and returns risk prediction.
+    Accepts a pre-computed 31-dim feature vector and returns risk prediction.
 
     Expected JSON:
     {
