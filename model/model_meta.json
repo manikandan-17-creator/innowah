@@ -1,0 +1,88 @@
+{
+  "trained_at": "2026-02-27T06:47:38.237094",
+  "best_model": "RandomForest",
+  "feature_subset": "all",
+  "n_features": 35,
+  "feature_names": [
+    "immediate_recall",
+    "delayed_recall",
+    "cue_benefit_index",
+    "retention_ratio",
+    "orientation_score",
+    "serial7s_score",
+    "clock_drawing_score",
+    "reaction_time_norm",
+    "error_consistency",
+    "naming_task_score",
+    "sentence_repetition",
+    "verbal_fluency_norm",
+    "iadl_score_norm",
+    "mood_filter",
+    "gait_speed",
+    "stride_variability",
+    "turning_velocity",
+    "postural_sway",
+    "step_count",
+    "cadence",
+    "double_support_time",
+    "heart_rate",
+    "spo2",
+    "rmssd",
+    "sdnn",
+    "lf_hf_ratio",
+    "desat_events",
+    "alpha_power",
+    "theta_power",
+    "delta_power",
+    "beta_power",
+    "theta_alpha_ratio",
+    "dominant_frequency",
+    "signal_entropy",
+    "posterior_alpha"
+  ],
+  "n_samples": 5000,
+  "class_dist": {
+    "normal": 3000,
+    "mild": 1250,
+    "high": 750
+  },
+  "metrics": {
+    "test_accuracy": 1.0,
+    "macro_f1": 1.0,
+    "roc_auc_ovr": 1.0,
+    "cv_accuracy": 1.0,
+    "cv_std": 0.0
+  },
+  "all_models": {
+    "RandomForest": {
+      "acc": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "cv": 1.0
+    },
+    "GradientBoosting": {
+      "acc": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "cv": 1.0
+    },
+    "LogisticRegression": {
+      "acc": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "cv": 1.0
+    },
+    "SVM": {
+      "acc": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "cv": 1.0
+    },
+    "XGBoost": {
+      "acc": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "cv": 1.0
+    }
+  }
+}

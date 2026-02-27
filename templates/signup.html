@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroMind+ — Log in/Sign up</title>
+    <meta name="description"
+        content="Create your NeuroMind+ account to track your cognitive health assessments, game scores, and dementia screening results over time.">
+    <link rel="stylesheet" href="static/signup_style.css">
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- ══════════════════════════
+         HEADER
+    ══════════════════════════ -->
+        <header>
+            <a href="/" class="logo">
+                <div class="logo-mark">🧠</div>
+                <div>
+                    <div class="logo-name">Neuro<span>Band+</span></div>
+                    <div class="logo-tagline">Dementia Screening Platform</div>
+                </div>
+            </a>
+            <div class="header-right">
+                <a href="/" class="header-link">← Back to Dashboard</a>
+            </div>
+        </header>
+
+
+        <!-- ══════════════════════════
+         MAIN AUTH LAYOUT
+    ══════════════════════════ -->
+        <main class="auth-main">
+
+            <!-- Left panel: branding -->
+            <div class="auth-left">
+                <div class="auth-eyebrow">
+                    <div class="eyebrow-dot"></div>
+                    Secure & Private
+                </div>
+                <h1>Track Your <em>Cognitive Journey</em> Over Time</h1>
+                <p class="auth-desc">
+                    Create a free account to save your assessment results, monitor your progress,
+                    and get personalised insights powered by our AI model.
+                </p>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon fi-teal">🧠</div>
+                        <div class="feature-text">
+                            <div class="feature-title">Memory Game Scores</div>
+                            <div class="feature-sub">Track accuracy, speed &amp; efficiency across sessions</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon fi-plum">🎯</div>
+                        <div class="feature-text">
+                            <div class="feature-title">N-Back Performance</div>
+                            <div class="feature-sub">Monitor working memory &amp; focus over time</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon fi-amber">📝</div>
+                        <div class="feature-text">
+                            <div class="feature-title">Questionnaire History</div>
+                            <div class="feature-sub">Save all 12-question survey results &amp; breakdowns</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon fi-sage">🤖</div>
+                        <div class="feature-text">
+                            <div class="feature-title">Dementia Prediction Score</div>
+                            <div class="feature-sub">AI-powered risk classification stored securely</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right panel: auth card -->
+            <div class="auth-card">
+                <div class="auth-card-blush"></div>
+
+                <!-- Tab switcher -->
+                <div class="auth-tabs" role="tablist">
+                    <button class="auth-tab active" id="tab-signup" role="tab" aria-selected="true"
+                        aria-controls="form-signup" onclick="switchTab('signup')">
+                        Sign Up
+                    </button>
+                    <button class="auth-tab" id="tab-signin" role="tab" aria-selected="false"
+                        aria-controls="form-signin" onclick="switchTab('signin')">
+                        Log In
+                    </button>
+                </div>
+
+                <!-- ── SIGN UP FORM ── -->
+                <form id="form-signup" class="auth-form visible" novalidate>
+
+                    <div class="auth-alert" id="signup-alert" role="alert"></div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-name">Full Name</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">👤</span>
+                            <input class="form-input" type="text" id="signup-name" placeholder="e.g. Alex Johnson"
+                                autocomplete="name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-email">Email Address</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✉️</span>
+                            <input class="form-input" type="email" id="signup-email" placeholder="you@example.com"
+                                autocomplete="email" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-password">Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔒</span>
+                            <input class="form-input" type="password" id="signup-password"
+                                placeholder="Min. 8 characters" autocomplete="new-password" required
+                                oninput="checkPasswordStrength(this.value)">
+                        </div>
+                        <!-- Strength meter -->
+                        <div class="pw-strength" id="pw-strength">
+                            <div class="pw-strength-bar-track">
+                                <div class="pw-strength-bar" id="pw-bar"></div>
+                            </div>
+                            <span class="pw-strength-label" id="pw-label">Enter a password</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-confirm">Confirm Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔑</span>
+                            <input class="form-input" type="password" id="signup-confirm"
+                                placeholder="Repeat your password" autocomplete="new-password" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-device">ESP32 Device ID <span
+                                style="font-size:12px;color:var(--text-muted,#888);font-weight:400">(provided with your
+                                device — leave blank if not using hardware)</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon">📡</span>
+                            <input class="form-input" type="text" id="signup-device"
+                                placeholder="e.g. ESP32_INNOWAH_001" autocomplete="off" style="font-family: monospace;">
+                        </div>
+                    </div>
+
+                    <div class="terms-row">
+                        <input class="terms-check" type="checkbox" id="signup-terms">
+                        <label class="terms-label" for="signup-terms">
+                            I agree to the <a href="#">Terms of Service</a> and
+                            <a href="#">Privacy Policy</a>. My data is stored securely and
+                            never shared without consent.
+                        </label>
+                    </div>
+
+                    <button class="btn-submit" type="submit" id="signup-btn">
+                        <div class="btn-spinner" id="signup-spinner"></div>
+                        <span class="btn-text">Create my Account →</span>
+                    </button>
+
+                    <p class="auth-footer">
+                        Already have an account?
+                        <a href="#" onclick="switchTab('signin'); return false;">Sign in here</a>
+                    </p>
+                </form>
+
+
+                <!-- ── SIGN IN FORM ── -->
+                <form id="form-signin" class="auth-form" novalidate>
+
+                    <div class="auth-alert" id="signin-alert" role="alert"></div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signin-email">Email Address</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✉️</span>
+                            <input class="form-input" type="email" id="signin-email" placeholder="you@example.com"
+                                autocomplete="email" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signin-password">Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔒</span>
+                            <input class="form-input" type="password" id="signin-password" placeholder="Your password"
+                                autocomplete="current-password" required>
+                        </div>
+                        <a href="#" class="forgot-link" onclick="handleForgot(event)">Forgot password?</a>
+                    </div>
+
+                    <button class="btn-submit" type="submit" id="signin-btn">
+                        <div class="btn-spinner" id="signin-spinner"></div>
+                        <span class="btn-text">Sign In →</span>
+                    </button>
+
+                    <p class="auth-footer">
+                        Don't have an account?
+                        <a href="#" onclick="switchTab('signup'); return false;">Sign up for free</a>
+                    </p>
+                </form>
+
+            </div><!-- /.auth-card -->
+
+        </main>
+    </div>
+
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite">
+        <span class="toast-icon" id="toast-icon">✅</span>
+        <span id="toast-msg"></span>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════════════
+     FIREBASE  (modular SDK v9 compat — CDN)
+     Replace the firebaseConfig below with YOUR project's values.
+     ════════════════════════════════════════════════════════════ -->
+    <script type="module">
+        /* ── Firebase imports ── */
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            updateProfile,
+            sendPasswordResetEmail
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore, doc, setDoc,
+            getDoc, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        /* ══════════════════════════════════════════════
+           🔥 YOUR FIREBASE CONFIG — replace these values
+           with those from Firebase console →
+           Project Settings → Your apps → SDK setup
+           ══════════════════════════════════════════════ */
+        const firebaseConfig = {
+            apiKey: "AIzaSyDv7BgLJM-xiwv1AWQJGrADRZnemWGgiUI",
+            authDomain: "dementia-screening.firebaseapp.com",
+            projectId: "dementia-screening",
+            storageBucket: "dementia-screening.firebasestorage.app",
+            messagingSenderId: "948621756070",
+            appId: "1:948621756070:web:dc2a7bcc43c1c3557a1667",
+            measurementId: "G-YPGKV8W0QH"
+        };
+
+        /* ── Initialise ── */
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        /* ── Helpers: UI ── */
+        window.showAlert = function (formId, msg, type = 'error') {
+            const al = document.getElementById(formId + '-alert');
+            al.textContent = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
+            al.className = `auth-alert show alert-${type}`;
+        }
+        window.clearAlert = function (formId) {
+            const al = document.getElementById(formId + '-alert');
+            al.className = 'auth-alert';
+            al.textContent = '';
+        }
+        window.setLoading = function (btnId, spinnerId, loading) {
+            const btn = document.getElementById(btnId);
+            const sp = document.getElementById(spinnerId);
+            btn.disabled = loading;
+            btn.classList.toggle('loading', loading);
+            sp.style.display = loading ? 'block' : 'none';
+        }
+        window.showToast = function (msg, type = 'success') {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+            t.className = `toast toast-${type} show`;
+            setTimeout(() => { t.classList.remove('show'); }, 4000);
+        }
+
+        /* ── SIGN UP handler ── */
+        document.getElementById('form-signup').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            clearAlert('signup');
+
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const terms = document.getElementById('signup-terms').checked;
+            const deviceId = document.getElementById('signup-device').value.trim().toUpperCase().replace(/\s+/g, '_');
+
+            /* Validate */
+            if (!name) return showAlert('signup', 'Please enter your full name.');
+            if (!email) return showAlert('signup', 'Please enter your email address.');
+            if (password.length < 8) return showAlert('signup', 'Password must be at least 8 characters.');
+            if (password !== confirm) return showAlert('signup', 'Passwords do not match.');
+            if (!terms) return showAlert('signup', 'Please accept the Terms of Service to continue.');
+
+            setLoading('signup-btn', 'signup-spinner', true);
+
+            try {
+                /* Firebase Auth: create user */
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                const uid = cred.user.uid;
+
+                /* Set display name */
+                await updateProfile(cred.user, { displayName: name });
+
+                /* Firestore: create user document
+                   Structure:
+                     /users/{uid}
+                       name, email, createdAt,
+                       scores: { memory, nback, questionnaire, mlPrediction, lastUpdated }
+                */
+                await setDoc(doc(db, 'users', uid), {
+                    name: name,
+                    email: email,
+                    device_id: deviceId || null,
+                    createdAt: serverTimestamp(),
+                    scores: {
+                        memory: null,
+                        nback: null,
+                        questionnaire: null,
+                        mlPrediction: null,
+                        lastUpdated: null
+                    }
+                });
+
+                /* Save uid + device_id to session */
+                sessionStorage.setItem('nb_uid', uid);
+                sessionStorage.setItem('nb_name', name);
+                if (deviceId) sessionStorage.setItem('nb_device_id', deviceId);
+
+                showAlert('signup', `Welcome, ${name}! Account created successfully.`, 'success');
+                showToast(`Welcome aboard, ${name.split(' ')[0]}! 🎉`);
+
+                /* Redirect to dashboard after short delay */
+                setTimeout(() => { window.location.href = '/'; }, 1800);
+
+            } catch (err) {
+                console.error(err);
+                const messages = {
+                    'auth/email-already-in-use': 'This email address is already registered. Try signing in.',
+                    'auth/invalid-email': 'Please enter a valid email address.',
+                    'auth/weak-password': 'Password is too weak. Use at least 8 characters with mixed characters.',
+                    'auth/network-request-failed': 'Network error. Please check your connection.'
+                };
+                showAlert('signup', messages[err.code] || err.message);
+            } finally {
+                setLoading('signup-btn', 'signup-spinner', false);
+            }
+        });
+
+
+        /* ── SIGN IN handler ── */
+        document.getElementById('form-signin').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            clearAlert('signin');
+
+            const email = document.getElementById('signin-email').value.trim();
+            const password = document.getElementById('signin-password').value;
+
+            if (!email) return showAlert('signin', 'Please enter your email address.');
+            if (!password) return showAlert('signin', 'Please enter your password.');
+
+            setLoading('signin-btn', 'signin-spinner', true);
+
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, password);
+                const uid = cred.user.uid;
+                const name = cred.user.displayName || 'User';
+
+                /* Optionally fetch user doc to get latest scores */
+                const snap = await getDoc(doc(db, 'users', uid));
+                const userData = snap.exists() ? snap.data() : {};
+
+                sessionStorage.setItem('nb_uid', uid);
+                sessionStorage.setItem('nb_name', name);
+
+                /* Restore device_id from Firestore profile */
+                if (userData.device_id) {
+                    sessionStorage.setItem('nb_device_id', userData.device_id);
+                }
+
+                /* If stored scores exist, push them back to Flask session */
+                if (userData.scores) {
+                    const s = userData.scores;
+                    if (s.memory !== null || s.nback !== null) {
+                        await fetch('/update_scores', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                memory_score: s.memory,
+                                nback_score: s.nback
+                            })
+                        }).catch(() => { });
+                    }
+                }
+
+                showAlert('signin', `Welcome back, ${name.split(' ')[0]}!`, 'success');
+                showToast(`Signed in as ${name.split(' ')[0]} 👋`);
+
+                setTimeout(() => { window.location.href = '/'; }, 1400);
+
+            } catch (err) {
+                console.error(err);
+                const messages = {
+                    'auth/user-not-found': 'No account found with this email address.',
+                    'auth/wrong-password': 'Incorrect password. Please try again.',
+                    'auth/invalid-credential': 'Invalid email or password. Please try again.',
+                    'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+                    'auth/network-request-failed': 'Network error. Please check your connection.',
+                    'auth/invalid-email': 'Please enter a valid email address.'
+                };
+                showAlert('signin', messages[err.code] || err.message);
+            } finally {
+                setLoading('signin-btn', 'signin-spinner', false);
+            }
+        });
+
+
+        /* ── Forgot password ── */
+        window.handleForgot = async function (e) {
+            e.preventDefault();
+            const email = document.getElementById('signin-email').value.trim();
+            if (!email) return showAlert('signin', 'Enter your email above first, then click "Forgot password?".');
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showAlert('signin', `Password reset email sent to ${email}`, 'success');
+            } catch (err) {
+                showAlert('signin', err.message);
+            }
+        }
+
+        /* ── Save scores to Firestore (called from other pages) ── */
+        window.saveScoresToFirebase = async function (scoreData) {
+            const uid = sessionStorage.getItem('nb_uid');
+            if (!uid) return;
+
+            try {
+                const updates = {};
+                if (scoreData.memory !== undefined) updates['scores.memory'] = scoreData.memory;
+                if (scoreData.nback !== undefined) updates['scores.nback'] = scoreData.nback;
+                if (scoreData.questionnaire !== undefined) updates['scores.questionnaire'] = scoreData.questionnaire;
+                if (scoreData.mlPrediction !== undefined) updates['scores.mlPrediction'] = scoreData.mlPrediction;
+                updates['scores.lastUpdated'] = serverTimestamp();
+
+                const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+                await updateDoc(doc(db, 'users', uid), updates);
+                console.log('[Firebase] Scores saved:', updates);
+            } catch (err) {
+                console.warn('[Firebase] Could not save scores:', err.message);
+            }
+        }
+
+    </script>
+
+
+    <!-- Non-module JS (tab switching, password strength) -->
+    <script>
+        /* ── Tab switcher ── */
+        function switchTab(tab) {
+            const signupForm = document.getElementById('form-signup');
+            const signinForm = document.getElementById('form-signin');
+            const signupTab = document.getElementById('tab-signup');
+            const signinTab = document.getElementById('tab-signin');
+
+            const isSignup = tab === 'signup';
+
+            signupForm.classList.toggle('visible', isSignup);
+            signinForm.classList.toggle('visible', !isSignup);
+            signupTab.classList.toggle('active', isSignup);
+            signinTab.classList.toggle('active', !isSignup);
+            signupTab.setAttribute('aria-selected', isSignup);
+            signinTab.setAttribute('aria-selected', !isSignup);
+        }
+
+        /* ── Password strength meter ── */
+        function checkPasswordStrength(pw) {
+            const bar = document.getElementById('pw-bar');
+            const label = document.getElementById('pw-label');
+
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (pw.length >= 12) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+            const levels = [
+                { pct: '0%', color: 'transparent', text: 'Enter a password' },
+                { pct: '20%', color: '#e07a5f', text: 'Very weak' },
+                { pct: '40%', color: '#e8a848', text: 'Weak' },
+                { pct: '60%', color: '#d4943a', text: 'Fair' },
+                { pct: '80%', color: '#7a9e87', text: 'Good' },
+                { pct: '100%', color: 'var(--teal)', text: 'Strong 🎉' },
+            ];
+
+            const lvl = pw.length === 0 ? levels[0] : levels[Math.min(score, 5)];
+            bar.style.width = lvl.pct;
+            bar.style.background = lvl.color;
+            label.textContent = lvl.text;
+            label.style.color = pw.length === 0 ? 'var(--text-light)' : lvl.color;
+        }
+    </script>
+
+</body>
+
+</html>
