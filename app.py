@@ -126,8 +126,9 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
 
     # ── Software features [0–13] ─────────────────────────────────────────────
     # Map existing cognitive game scores into the vector when available
-    memory_raw = cognitive_scores["memory"]
-    nback_raw  = cognitive_scores["nback"]
+    scores = get_session_scores()
+    memory_raw = scores["memory"]
+    nback_raw  = scores["nback"]
 
     immediate_recall  = _get(sw, "immediate_recall",  memory_raw if memory_raw is not None else 0.5)
     delayed_recall    = _get(sw, "delayed_recall",    memory_raw if memory_raw is not None else 0.5)
@@ -618,22 +619,25 @@ def full_assessment():
       ...any other software fields...
     }
     """
+    scores = get_session_scores()
     data = request.get_json(force=True)
     if not data:
         return jsonify({"status": "error", "message": "No JSON body"}), 400
 
     # ── Update game scores ─────────────────────────────────────────────────
-    if "memory_score" in data: cognitive_scores["memory"] = data["memory_score"]
-    if "nback_score"  in data: cognitive_scores["nback"]  = data["nback_score"]
+    if "memory_score" in data: scores["memory"] = data["memory_score"]
+    if "nback_score"  in data: scores["nback"]  = data["nback_score"]
 
     game_prediction = None
-    if cognitive_scores["memory"] is not None and cognitive_scores["nback"] is not None:
-        final = round((cognitive_scores["memory"] + cognitive_scores["nback"]) / 2, 2)
-        cognitive_scores["final"] = final
-        features    = np.array([[cognitive_scores["memory"], cognitive_scores["nback"], final]])
+    if scores["memory"] is not None and scores["nback"] is not None:
+        final = round((scores["memory"] + scores["nback"]) / 2, 2)
+        scores["final"] = final
+        features    = np.array([[scores["memory"], scores["nback"], final]])
         game_pred   = int(model.predict(features)[0])
-        cognitive_scores["ml_prediction"] = game_pred
+        scores["ml_prediction"] = game_pred
         game_prediction = game_pred
+
+    save_session_scores(scores)
 
     # ── INNOWAH hardware + full cognitive inference ────────────────────────
     device_id   = data.get("device_id", "unknown")
@@ -651,9 +655,9 @@ def full_assessment():
         # Original game model output
         "game_ml_prediction": game_prediction,
         "game_scores": {
-            "memory": cognitive_scores["memory"],
-            "nback":  cognitive_scores["nback"],
-            "final":  cognitive_scores["final"],
+            "memory": scores["memory"],
+            "nback":  scores["nback"],
+            "final":  scores["final"],
         },
         # INNOWAH comprehensive output
         "innowah": innowah
@@ -688,7 +692,7 @@ def health():
         "innowah_model":      innowah_model is not None,
         "game_model":         model is not None,
         "active_devices":     list(hardware_sessions.keys()),
-        "cognitive_scores":   cognitive_scores,
+        "cognitive_scores":   get_session_scores(),
         "timestamp":          datetime.utcnow().isoformat()
     })
 
