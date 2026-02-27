@@ -3,7 +3,7 @@ INNOWAH 2026 - Feature Extractor
 Maps raw software (cognitive test) and hardware (ESP32 sensor) data
 into a fixed-length feature vector for the ML model.
 
-Feature Vector (35 features total):
+Feature Vector (31 features total):
   Software / Cognitive [14]:
     [0]  immediate_recall          (0–1)
     [1]  delayed_recall            (0–1)
@@ -20,7 +20,7 @@ Feature Vector (35 features total):
     [12] iadl_score_norm           (0–1, inverted)
     [13] mood_filter               (0 or 1)
 
-  Hardware / Sensor [21]:
+  Hardware / Sensor [15]:
     IMU [4]:
     [14] gait_speed_norm           (0–1)
     [15] stride_variability_norm   (0–1, inverted)
@@ -34,23 +34,19 @@ Feature Vector (35 features total):
     [21] spo2_norm                 (0–1)
     [22] desat_events_norm         (0–1, inverted)
 
-    EEG [8]:
+    EEG [5]:
     [23] alpha_power_norm          (0–1)
     [24] theta_power_norm          (0–1, inverted)
     [25] delta_power_norm          (0–1, inverted)
-    [26] beta_power_norm           (0–1)
-    [27] theta_alpha_ratio_norm    (0–1, inverted)
-    [28] dominant_frequency_norm   (0–1)
-    [29] signal_entropy_norm       (0–1)
-    [30] posterior_alpha_norm      (0–1)
+    [26] theta_alpha_ratio_norm    (0–1, inverted)
+    [27] dominant_frequency_norm   (0–1)
 
-    Activity [2]:
-    [31] daily_steps_norm          (0–1)
-    [32] skin_temp_norm            (0–1)
+    Activity [1]:
+    [28] daily_steps_norm          (0–1)
 
     Aggregates [2]:
-    [33] sensor_score              (0–1, 60:40 weighted)
-    [34] cognitive_score           (0–1, 60:40 weighted)
+    [29] sensor_score              (0–1, 60:40 weighted)
+    [30] cognitive_score           (0–1, 60:40 weighted)
 """
 
 import numpy as np
@@ -80,7 +76,6 @@ class FeatureExtractor:
         "alpha_power":         {"normal": (25, 40),    "mild": (20, 25),    "high": (0.0, 20)},
         "theta_power":         {"normal": (10, 20),    "mild": (20, 25),    "high": (25, 100)},
         "delta_power":         {"normal": (5, 15),     "mild": (15, 20),    "high": (20, 100)},
-        "beta_power":          {"normal": (15, 25),    "mild": (10, 15),    "high": (0.0, 12)},
         "theta_alpha_ratio":   {"normal": (0.5, 0.9),  "mild": (1.0, 1.3),  "high": (1.5, 10)},
         "dominant_frequency":  {"normal": (9.0, 10.5), "mild": (8.0, 9.0),  "high": (0.0, 8.0)},
         "spo2_activity":       {"normal": (5000, 8000),"mild": (3000, 4000),"high": (0.0, 3000)},
@@ -100,13 +95,9 @@ class FeatureExtractor:
         "alpha_power":        (0.0,   50.0,  True),
         "theta_power":        (0.0,   50.0,  False),
         "delta_power":        (0.0,   40.0,  False),
-        "beta_power":         (0.0,   40.0,  True),
         "theta_alpha_ratio":  (0.0,   3.0,   False),
         "dominant_frequency": (5.0,   12.0,  True),
-        "signal_entropy":     (0.0,   3.0,   True),
-        "posterior_alpha":    (0.0,   50.0,  True),
         "daily_steps":        (0.0,   10000, True),
-        "skin_temp":          (32.0,  38.0,  True),
 
         # Cognitive
         "recall_score":       (0.0,   1.0,   True),
@@ -137,7 +128,6 @@ class FeatureExtractor:
         imu  = hw.get("imu", {})
         ppg  = hw.get("ppg", {})
         eeg  = hw.get("eeg", {})
-        temp = hw.get("temperature", {})
 
         def get(d, key, default=None):
             v = d.get(key, default)
@@ -184,22 +174,17 @@ class FeatureExtractor:
         f_alpha        = self.normalize(get(eeg, "alpha_power", 30), "alpha_power")
         f_theta        = self.normalize(get(eeg, "theta_power", 15), "theta_power")
         f_delta        = self.normalize(get(eeg, "delta_power", 10), "delta_power")
-        f_beta         = self.normalize(get(eeg, "beta_power", 20), "beta_power")
         f_ta_ratio     = self.normalize(get(eeg, "theta_alpha_ratio", 0.7), "theta_alpha_ratio")
         f_dom_freq     = self.normalize(get(eeg, "dominant_frequency", 10.0), "dominant_frequency")
-        f_entropy      = self.normalize(get(eeg, "signal_entropy", 1.8), "signal_entropy")
-        f_post_alpha   = self.normalize(get(eeg, "posterior_alpha", 30), "posterior_alpha")
 
-        # Activity + Temp
+        # Activity
         f_steps        = self.normalize(get(imu, "step_count", 5000), "daily_steps")
-        f_skin_temp    = self.normalize(get(temp, "skin_temp", 35.5), "skin_temp")
 
         hw_features = np.array([
             f_gait_speed, f_stride_var, f_turn_vel, f_sway,
             f_rmssd, f_sdnn, f_lf_hf, f_spo2, f_desat,
-            f_alpha, f_theta, f_delta, f_beta, f_ta_ratio,
-            f_dom_freq, f_entropy, f_post_alpha,
-            f_steps, f_skin_temp
+            f_alpha, f_theta, f_delta, f_ta_ratio,
+            f_dom_freq, f_steps
         ], dtype=np.float32)
 
         # ── Aggregate scores (60:40 rule from document) ──────────────
@@ -229,11 +214,11 @@ class FeatureExtractor:
             "gait_speed", "stride_variability", "turning_velocity", "postural_sway",
             # PPG (5)
             "rmssd", "sdnn", "lf_hf_ratio", "spo2", "desat_events",
-            # EEG (8)
-            "alpha_power", "theta_power", "delta_power", "beta_power",
-            "theta_alpha_ratio", "dominant_frequency", "signal_entropy", "posterior_alpha",
-            # Activity (2)
-            "daily_steps", "skin_temp",
+            # EEG (5)
+            "alpha_power", "theta_power", "delta_power",
+            "theta_alpha_ratio", "dominant_frequency",
+            # Activity (1)
+            "daily_steps",
             # Aggregates (2)
             "sensor_score", "cognitive_score"
         ]
@@ -242,9 +227,9 @@ class FeatureExtractor:
         """Split feature vector into domain-level scores for explainability."""
         fv = np.array(feature_vector)
         return {
-            "memory":      float(np.mean(fv[[0,1,2,3,4, 9,22,23,24]])),
-            "reasoning":   float(np.mean(fv[[5,6,7,8,  14,15,16,26]])),
-            "visuospatial":float(np.mean(fv[[17,30,     ]])),
-            "language":    float(np.mean(fv[[9,10,11,   28,29]])),
-            "behavior":    float(np.mean(fv[[12,13,     18,20,21,22,31]])),
+            "memory":      float(np.mean(fv[[0,1,2,3,4, 9,21,22,23]])),
+            "reasoning":   float(np.mean(fv[[5,6,7,8,  14,15,16,24,25]])),
+            "visuospatial":float(np.mean(fv[[17,26,     ]])),
+            "language":    float(np.mean(fv[[9,10,11,   27]])),
+            "behavior":    float(np.mean(fv[[12,13,     18,19,20,28]])),
         }

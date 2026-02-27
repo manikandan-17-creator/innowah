@@ -1,6 +1,6 @@
 """
 INNOWAH 2026 - ML Inference Engine
-Loads a trained model and runs predictions on the 35-feature vector.
+Loads a trained model and runs predictions on the 31-feature vector.
 
 Falls back to a rule-based clinical engine if no trained model exists yet.
 This lets the system work immediately and improve with data over time.
@@ -35,9 +35,8 @@ class InnowahInferenceEngine:
         (23, "alpha_power",         0.50, 0.40, "lower_worse"),
         (24, "theta_power",         0.60, 0.50, "higher_worse"),
         (25, "delta_power",         0.625,0.50, "higher_worse"),
-        (26, "beta_power",          0.30, 0.25, "lower_worse"),
-        (27, "theta_alpha_ratio",   0.467,0.567,"higher_worse"),
-        (28, "dominant_frequency",  0.571,0.429,"lower_worse"),
+        (26, "theta_alpha_ratio",   0.467,0.567,"higher_worse"),
+        (27, "dominant_frequency",  0.571,0.429,"lower_worse"),
         # Cognitive
         (0,  "immediate_recall",    0.7,  0.5,  "lower_worse"),
         (1,  "delayed_recall",      0.7,  0.5,  "lower_worse"),
@@ -83,7 +82,7 @@ class InnowahInferenceEngine:
         return self.model is not None
 
     def predict(self, features: np.ndarray) -> dict:
-        """Run prediction on a 35-dim feature vector."""
+        """Run prediction on a 31-dim feature vector."""
         fv = np.array(features, dtype=np.float32).flatten()
 
         if self.model is not None:
@@ -100,8 +99,8 @@ class InnowahInferenceEngine:
         risk_score = float(prob[1] * 50 + prob[2] * 100)
         risk_level = ["Normal", "Mild Risk", "High Risk"][np.argmax(prob)]
 
-        sensor_score   = float(fv[33]) * 100
-        cognitive_score = float(fv[34]) * 100
+        sensor_score   = float(fv[29]) * 100
+        cognitive_score = float(fv[30]) * 100
 
         domain_scores  = self._compute_domain_scores(fv)
         feature_flags  = self._get_feature_flags(fv)
@@ -155,12 +154,12 @@ class InnowahInferenceEngine:
         else:
             risk_level = "Normal"
 
-        sensor_score    = float(fv[33]) * 100
-        cognitive_score = float(fv[34]) * 100
+        sensor_score    = float(fv[29]) * 100
+        cognitive_score = float(fv[30]) * 100
         domain_scores   = self._compute_domain_scores(fv)
 
         # Weighted final (60% sensor, 40% cognitive from document)
-        final_risk = (1.0 - fv[33]) * 0.60 * 100 + (1.0 - fv[34]) * 0.40 * 100
+        final_risk = (1.0 - fv[29]) * 0.60 * 100 + (1.0 - fv[30]) * 0.40 * 100
 
         feature_flags  = {"mild": mild_flags, "high": high_flags}
         recommendation = self._get_recommendation(risk_level, feature_flags)
@@ -181,10 +180,10 @@ class InnowahInferenceEngine:
         # Domain feature indices
         domains = {
             "memory":       [0, 1, 2, 3, 4, 18, 19, 23, 24, 25],
-            "reasoning":    [5, 6, 7, 8, 14, 15, 16, 26],
-            "visuospatial": [17, 30],
-            "language":     [9, 10, 11, 28, 29],
-            "behavior":     [12, 13, 20, 21, 22, 31],
+            "reasoning":    [5, 6, 7, 8, 14, 15, 16, 26, 27],
+            "visuospatial": [17, 26],
+            "language":     [9, 10, 11, 27],
+            "behavior":     [12, 13, 20, 21, 22, 28],
         }
         scores = {}
         for domain, indices in domains.items():

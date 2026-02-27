@@ -25,7 +25,7 @@ RENDER_API_URL = os.environ.get("RENDER_API_URL", "https://your-app-name.onrende
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── Existing cognitive game model ─────────────────────────────────────────────
-model = joblib.load("model/alz_model.joblib")
+model = joblib.load("model/innowah_model.pkl")
 
 # ── INNOWAH hardware ML model (loads if trained, else uses rule-based engine) ─
 INNOWAH_MODEL_PATH  = "model/innowah_model.pkl"
@@ -78,13 +78,9 @@ NORM_PARAMS = {
     "alpha_power":         (0.0,    50.0,  True),
     "theta_power":         (0.0,    50.0,  False),
     "delta_power":         (0.0,    40.0,  False),
-    "beta_power":          (0.0,    40.0,  True),
     "theta_alpha_ratio":   (0.0,    3.0,   False),
     "dominant_frequency":  (5.0,    12.0,  True),
-    "signal_entropy":      (0.0,    3.0,   True),
-    "posterior_alpha":     (0.0,    50.0,  True),
     "daily_steps":         (0.0,    10000, True),
-    "skin_temp":           (32.0,   38.0,  True),
     "reaction_time":       (200.0,  2000.0,False),
     "verbal_fluency":      (0.0,    30.0,  True),
     "iadl_impairments":    (0.0,    8.0,   False),
@@ -104,7 +100,7 @@ def _get(d, key, default=0.5):
 
 def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.ndarray:
     """
-    Build a 35-dim feature vector from cognitive test + ESP32 sensor data.
+    Build a 31-dim feature vector from cognitive test + ESP32 sensor data.
     All values normalized to [0,1] where 1 = healthy end of spectrum.
 
     Layout:
@@ -120,7 +116,6 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
     imu = hw.get("imu",  {})
     ppg = hw.get("ppg",  {})
     eeg = hw.get("eeg",  {})
-    tmp = hw.get("temperature", {})
 
     # ── Software features [0–13] ─────────────────────────────────────────────
     # Map existing cognitive game scores into the vector when available
@@ -153,7 +148,7 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
     hw_vec = np.array([
         # IMU [14–17]
         _norm(_get(imu, "gait_speed",          1.1),   "gait_speed"),
-        _norm(_get(imu, "stride_variability",  2.5),   "stride_variability"),
+        _norm(_get(imu, "stride_variability",  2.4),   "stride_variability"),
         _norm(_get(imu, "turning_velocity",    130),   "turning_velocity"),
         _norm(_get(imu, "postural_sway",       2.0),   "postural_sway"),
         # PPG/HRV [18–22]
@@ -162,21 +157,17 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
         _norm(_get(ppg, "lf_hf_ratio",         1.5),   "lf_hf_ratio"),
         _norm(_get(ppg, "spo2",                97),    "spo2"),
         _norm(_get(ppg, "desat_events",        0),     "desat_events"),
-        # EEG [23–30]
+        # EEG [23–27]
         _norm(_get(eeg, "alpha_power",         30),    "alpha_power"),
         _norm(_get(eeg, "theta_power",         15),    "theta_power"),
         _norm(_get(eeg, "delta_power",         10),    "delta_power"),
-        _norm(_get(eeg, "beta_power",          20),    "beta_power"),
         _norm(_get(eeg, "theta_alpha_ratio",   0.7),   "theta_alpha_ratio"),
         _norm(_get(eeg, "dominant_frequency",  10.0),  "dominant_frequency"),
-        _norm(_get(eeg, "signal_entropy",      1.8),   "signal_entropy"),
-        _norm(_get(eeg, "posterior_alpha",     30),    "posterior_alpha"),
-        # Activity + Temp [31–32]
+        # Activity [28]
         _norm(_get(imu, "step_count",          5000),  "daily_steps"),
-        _norm(_get(tmp, "skin_temp",           35.5),  "skin_temp"),
     ], dtype=np.float32)
 
-    # ── Aggregate scores [33–34] ─────────────────────────────────────────────
+    # ── Aggregate scores [29–30] ─────────────────────────────────────────────
     sensor_score    = float(np.mean(hw_vec))
     cognitive_score = float(np.mean(sw_vec))
     agg_vec = np.array([sensor_score, cognitive_score], dtype=np.float32)
@@ -201,9 +192,8 @@ CLINICAL_RULES = [
     (23, "alpha_power",         0.50, 0.40, "lower_worse"),
     (24, "theta_power",         0.60, 0.50, "higher_worse"),
     (25, "delta_power",         0.63, 0.50, "higher_worse"),
-    (26, "beta_power",          0.30, 0.25, "lower_worse"),
-    (27, "theta_alpha_ratio",   0.47, 0.57, "higher_worse"),
-    (28, "dominant_frequency",  0.57, 0.43, "lower_worse"),
+    (26, "theta_alpha_ratio",   0.47, 0.57, "higher_worse"),
+    (27, "dominant_frequency",  0.57, 0.43, "lower_worse"),
     (0,  "immediate_recall",    0.70, 0.50, "lower_worse"),
     (1,  "delayed_recall",      0.70, 0.50, "lower_worse"),
     (3,  "retention_ratio",     0.70, 0.50, "lower_worse"),
@@ -213,10 +203,10 @@ CLINICAL_RULES = [
 
 DOMAIN_INDICES = {
     "memory":       [0, 1, 2, 3, 4, 18, 19, 23, 24, 25],
-    "reasoning":    [5, 6, 7, 8, 14, 15, 16, 26],
-    "visuospatial": [17, 30],
-    "language":     [9, 10, 11, 28, 29],
-    "behavior":     [12, 13, 20, 21, 22, 31],
+    "reasoning":    [5, 6, 7, 8, 14, 15, 16, 26, 27],
+    "visuospatial": [17, 26],
+    "language":     [9, 10, 11, 27],
+    "behavior":     [12, 13, 20, 21, 22, 28],
 }
 
 def run_innowah_inference(feature_vector: np.ndarray) -> dict:
@@ -247,8 +237,8 @@ def run_innowah_inference(feature_vector: np.ndarray) -> dict:
         n = len(CLINICAL_RULES)
         raw = (len(mild_flags) * 30 + len(high_flags) * 60) / n
         # Apply 60:40 weighting: sensor 60%, cognitive 40%
-        sensor_health  = float(fv[33])
-        cog_health     = float(fv[34])
+        sensor_health  = float(fv[29])
+        cog_health     = float(fv[30])
         risk_score     = min(100.0, (1 - sensor_health) * 0.60 * 100 +
                                     (1 - cog_health)    * 0.40 * 100)
         risk_level     = ("High Risk" if risk_score >= 50 else
@@ -292,8 +282,8 @@ def run_innowah_inference(feature_vector: np.ndarray) -> dict:
     return {
         "risk_score":       round(float(risk_score), 1),
         "risk_level":       risk_level,
-        "sensor_score":     round(float(fv[33]) * 100, 1),
-        "cognitive_score":  round(float(fv[34]) * 100, 1),
+        "sensor_score":     round(float(fv[29]) * 100, 1),
+        "cognitive_score":  round(float(fv[30]) * 100, 1),
         "domain_scores":    domain_scores,
         "feature_flags":    {"mild": mild_flags, "high": high_flags},
         "recommendation":   recommendation,

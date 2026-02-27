@@ -5,7 +5,7 @@ A lightweight Flask API that loads the trained INNOWAH model
 and serves predictions. Deployed on Render as a Web Service.
 
 Endpoints:
-  POST /predict        — accepts a 35-dim feature vector, returns risk prediction
+  POST /predict        — accepts a 31-dim feature vector, returns risk prediction
   POST /predict_raw    — accepts raw software parameters, builds features internally
   GET  /health         — health check for Render monitoring
   GET  /               — landing page / status
@@ -66,13 +66,9 @@ NORM_PARAMS = {
     "alpha_power":         (0.0,    50.0,  True),
     "theta_power":         (0.0,    50.0,  False),
     "delta_power":         (0.0,    40.0,  False),
-    "beta_power":          (0.0,    40.0,  True),
     "theta_alpha_ratio":   (0.0,    3.0,   False),
     "dominant_frequency":  (5.0,    12.0,  True),
-    "signal_entropy":      (0.0,    3.0,   True),
-    "posterior_alpha":      (0.0,    50.0,  True),
     "daily_steps":         (0.0,    10000, True),
-    "skin_temp":           (32.0,   38.0,  True),
     "reaction_time":       (200.0,  2000.0, False),
     "verbal_fluency":      (0.0,    30.0,  True),
     "iadl_impairments":    (0.0,    8.0,   False),
@@ -99,7 +95,7 @@ def _get(d, key, default=0.5):
 
 def extract_features_from_raw(software_data: dict, hardware_data: dict = None) -> np.ndarray:
     """
-    Build a 35-dim feature vector from raw software parameters.
+    Build a 31-dim feature vector from raw software parameters.
     Hardware data defaults to midpoint (0.5) when not provided.
     """
     sw = software_data or {}
@@ -107,7 +103,6 @@ def extract_features_from_raw(software_data: dict, hardware_data: dict = None) -
     imu = hw.get("imu", {})
     ppg = hw.get("ppg", {})
     eeg = hw.get("eeg", {})
-    tmp = hw.get("temperature", {})
 
     # Software features [0–13]
     sw_vec = np.array([
@@ -127,7 +122,7 @@ def extract_features_from_raw(software_data: dict, hardware_data: dict = None) -
         _get(sw, "mood_filter",            0.0),
     ], dtype=np.float32)
 
-    # Hardware features [14–32]
+    # Hardware features [14–28]
     hw_vec = np.array([
         _norm(_get(imu, "gait_speed",          1.1),  "gait_speed"),
         _norm(_get(imu, "stride_variability",  2.5),  "stride_variability"),
@@ -141,16 +136,12 @@ def extract_features_from_raw(software_data: dict, hardware_data: dict = None) -
         _norm(_get(eeg, "alpha_power",         30),   "alpha_power"),
         _norm(_get(eeg, "theta_power",         15),   "theta_power"),
         _norm(_get(eeg, "delta_power",         10),   "delta_power"),
-        _norm(_get(eeg, "beta_power",          20),   "beta_power"),
         _norm(_get(eeg, "theta_alpha_ratio",   0.7),  "theta_alpha_ratio"),
         _norm(_get(eeg, "dominant_frequency",  10.0), "dominant_frequency"),
-        _norm(_get(eeg, "signal_entropy",      1.8),  "signal_entropy"),
-        _norm(_get(eeg, "posterior_alpha",     30),   "posterior_alpha"),
         _norm(_get(imu, "step_count",          5000), "daily_steps"),
-        _norm(_get(tmp, "skin_temp",           35.5), "skin_temp"),
     ], dtype=np.float32)
 
-    # Aggregate scores [33–34]
+    # Aggregate scores [29–30]
     sensor_score    = float(np.mean(hw_vec))
     cognitive_score = float(np.mean(sw_vec))
 
@@ -173,9 +164,8 @@ CLINICAL_RULES = [
     (23, "alpha_power",         0.50, 0.40, "lower_worse"),
     (24, "theta_power",         0.60, 0.50, "higher_worse"),
     (25, "delta_power",         0.63, 0.50, "higher_worse"),
-    (26, "beta_power",          0.30, 0.25, "lower_worse"),
-    (27, "theta_alpha_ratio",   0.47, 0.57, "higher_worse"),
-    (28, "dominant_frequency",  0.57, 0.43, "lower_worse"),
+    (26, "theta_alpha_ratio",   0.47, 0.57, "higher_worse"),
+    (27, "dominant_frequency",  0.57, 0.43, "lower_worse"),
     (0,  "immediate_recall",    0.70, 0.50, "lower_worse"),
     (1,  "delayed_recall",      0.70, 0.50, "lower_worse"),
     (3,  "retention_ratio",     0.70, 0.50, "lower_worse"),
@@ -185,10 +175,10 @@ CLINICAL_RULES = [
 
 DOMAIN_INDICES = {
     "memory":       [0, 1, 2, 3, 4, 18, 19, 23, 24, 25],
-    "reasoning":    [5, 6, 7, 8, 14, 15, 16, 26],
-    "visuospatial": [17, 30],
-    "language":     [9, 10, 11, 28, 29],
-    "behavior":     [12, 13, 20, 21, 22, 31],
+    "reasoning":    [5, 6, 7, 8, 14, 15, 16, 26, 27],
+    "visuospatial": [17, 26],
+    "language":     [9, 10, 11, 27],
+    "behavior":     [12, 13, 20, 21, 22, 28],
 }
 
 
@@ -217,8 +207,8 @@ def run_inference(feature_vector: np.ndarray) -> dict:
                 if val > mild_t:    high_flags.append(name)
                 elif val > normal_t: mild_flags.append(name)
 
-        sensor_health  = float(fv[33]) if len(fv) > 33 else 0.5
-        cog_health     = float(fv[34]) if len(fv) > 34 else 0.5
+        sensor_health  = float(fv[29]) if len(fv) > 29 else 0.5
+        cog_health     = float(fv[30]) if len(fv) > 30 else 0.5
         risk_score     = min(100.0, (1 - sensor_health) * 0.60 * 100 +
                                     (1 - cog_health)    * 0.40 * 100)
         risk_level     = ("High Risk" if risk_score >= 50 else
@@ -263,8 +253,8 @@ def run_inference(feature_vector: np.ndarray) -> dict:
     return {
         "risk_score":      round(float(risk_score), 1),
         "risk_level":      risk_level,
-        "sensor_score":    round(float(fv[33]) * 100, 1) if len(fv) > 33 else 50.0,
-        "cognitive_score": round(float(fv[34]) * 100, 1) if len(fv) > 34 else 50.0,
+        "sensor_score":    round(float(fv[29]) * 100, 1) if len(fv) > 29 else 50.0,
+        "cognitive_score": round(float(fv[30]) * 100, 1) if len(fv) > 30 else 50.0,
         "domain_scores":   domain_scores,
         "feature_flags":   {"mild": mild_flags, "high": high_flags},
         "recommendation":  recommendation,
@@ -300,7 +290,7 @@ def predict():
 
     Expected JSON:
     {
-      "features": [0.67, 0.33, 0.50, ... ]   // 35 float values
+      "features": [0.67, 0.33, 0.50, ... ]   // 31 float values
     }
     """
     data = request.get_json(force=True)
@@ -309,12 +299,12 @@ def predict():
 
     features = data.get("features")
     if not features or not isinstance(features, list):
-        return jsonify({"status": "error", "message": "'features' must be a list of 35 floats"}), 400
+        return jsonify({"status": "error", "message": "'features' must be a list of 31 floats"}), 400
 
-    if len(features) != 35:
+    if len(features) != 31:
         return jsonify({
             "status": "error",
-            "message": f"Expected 35 features, got {len(features)}"
+            "message": f"Expected 31 features, got {len(features)}"
         }), 400
 
     fv = np.array(features, dtype=np.float32)
@@ -332,7 +322,7 @@ def predict():
 @app.route("/predict_raw", methods=["POST"])
 def predict_raw():
     """
-    Accepts raw software/cognitive parameters, builds the 35-dim feature
+    Accepts raw software/cognitive parameters, builds the 31-dim feature
     vector internally (hardware features default to healthy midpoints),
     and returns the risk prediction.
 

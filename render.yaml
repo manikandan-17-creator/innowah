@@ -4,6 +4,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 services:
+  # ── Service 1: ML Prediction API ──────────────────────────────────────────
   - type: web
     name: innowah-ml-api
     runtime: python
@@ -18,3 +19,17 @@ services:
         value: model/innowah_scaler.pkl
     plan: free
     healthCheckPath: /health
+
+  # ── Service 2: Main Website ───────────────────────────────────────────────
+  - type: web
+    name: innowah-website
+    runtime: python
+    buildCommand: pip install -r requirements_render.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: RENDER_API_URL
+        value: "https://innowah-ml-api.onrender.com/predict"
+    plan: free
+    healthCheckPath: /api/health
