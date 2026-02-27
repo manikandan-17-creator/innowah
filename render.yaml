@@ -1,0 +1,20 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Render Blueprint — INNOWAH ML Prediction API
+# This file auto-configures the service when connected to Render.
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: innowah-ml-api
+    runtime: python
+    buildCommand: pip install -r requirements_render.txt
+    startCommand: gunicorn render_api:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: MODEL_PATH
+        value: model/innowah_model.pkl
+      - key: SCALER_PATH
+        value: model/innowah_scaler.pkl
+    plan: free
+    healthCheckPath: /health

@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindCare — Cognitive Assessment</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="static/questionnaire_style.css">
+
+</head>
+
+<body>
+  <canvas id="confetti"></canvas>
+
+  <!-- HEADER -->
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-mark">🧠</div>
+      <div class="logo-name">Mind<span>Care</span></div>
+    </a>
+    <div class="hdr-mid">
+      <span class="hdr-lbl">Progress</span>
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill"></div>
+      </div>
+      <span class="hdr-pct" id="prog-pct">0%</span>
+    </div>
+    <a href="/" class="back-btn">← Dashboard</a>
+  </header>
+
+  <div class="wrap">
+
+    <!-- ════════════════════════════════════
+     PAGE 0 — WELCOME
+════════════════════════════════════ -->
+    <div class="page active" id="pg-0">
+      <div style="text-align:center;font-size:68px;margin-bottom:14px;line-height:1">🧠</div>
+      <div class="pg-title" style="text-align:center">Welcome to Your<br><em>Cognitive Assessment</em></div>
+      <p class="pg-sub" style="text-align:center">This survey helps assess your cognitive health. Answer every question
+        honestly and carefully — there are no right or wrong answers, and all results are confidential.</p>
+      <div class="card">
+        <div class="welcome-steps">
+          <div class="ws">
+            <div class="ws-n">1</div>
+            <div class="ws-t"><strong>Pre-screen check</strong> — Quick questions to confirm testing conditions are
+              suitable.</div>
+          </div>
+          <div class="ws">
+            <div class="ws-n">2</div>
+            <div class="ws-t"><strong>Cognitive tasks</strong> — Memory, attention, language and visual tasks. Take your
+              time with each one.</div>
+          </div>
+          <div class="ws">
+            <div class="ws-n">3</div>
+            <div class="ws-t"><strong>Daily life & mood</strong> — Questions about your everyday activities and how you
+              have been feeling.</div>
+          </div>
+          <div class="ws">
+            <div class="ws-n">4</div>
+            <div class="ws-t"><strong>Results</strong> — Your results are calculated immediately and sent securely to
+              your care team.</div>
+          </div>
+        </div>
+        <div class="info" style="margin-bottom:0"><span class="info-ic">⏱️</span><span>Takes approximately <strong>10–15
+              minutes.</strong> You must complete every question on each page before moving forward.</span></div>
+      </div>
+      <div class="nav"><button class="btn-next" onclick="goTo(1)">Begin Assessment →</button></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 1 — PRE-SCREEN (Section 0)
+════════════════════════════════════ -->
+    <div class="page" id="pg-1">
+      <div class="pill p-sage">Pre-Screen Check</div>
+      <div class="pg-title">Before We Begin</div>
+      <p class="pg-sub">Answer all four questions. If you are not feeling well or have a medical issue right now, it may
+        be better to take this test another day.</p>
+
+      <div class="card">
+        <div class="q-lbl">1. Are you wearing your glasses or hearing aid if you normally need them?</div>
+        <div class="choices" id="cg-ps1">
+          <button class="ch" onclick="pick('ps1','yes',this,'cg-ps1')">
+            <div class="ch-icon">👓</div>
+            <div class="ch-body"><span class="ch-main">Yes, I am wearing them</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('ps1','notneeded',this,'cg-ps1')">
+            <div class="ch-icon">✋</div>
+            <div class="ch-body"><span class="ch-main">I don't need them</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">2. Are you feeling alert and well today — not unwell, feverish, or very tired?</div>
+        <div class="choices-2" id="cg-ps2">
+          <button class="ch" onclick="pick('ps2','yes',this,'cg-ps2')">
+            <div class="ch-icon">✅</div>
+            <div class="ch-body"><span class="ch-main">Yes, I feel well</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('ps2','no',this,'cg-ps2')">
+            <div class="ch-icon">🤒</div>
+            <div class="ch-body"><span class="ch-main">No, not feeling well</span><span class="ch-sub">Consider
+                postponing</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">3. Do you currently have any of the following — fever, active infection, uncontrolled
+          diabetes, or thyroid problem?</div>
+        <div class="choices-2" id="cg-ps3">
+          <button class="ch" onclick="pick('ps3','no',this,'cg-ps3')">
+            <div class="ch-icon">✅</div>
+            <div class="ch-body"><span class="ch-main">No, none of these</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('ps3','yes',this,'cg-ps3')">
+            <div class="ch-icon">⚠️</div>
+            <div class="ch-body"><span class="ch-main">Yes, one or more apply</span><span class="ch-sub">Consider
+                postponing</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">4. Did you sleep adequately last night?</div>
+        <div class="choices-2" id="cg-ps4">
+          <button class="ch" onclick="pick('ps4','yes',this,'cg-ps4')">
+            <div class="ch-icon">😴</div>
+            <div class="ch-body"><span class="ch-main">Yes, I slept well</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('ps4','no',this,'cg-ps4')">
+            <div class="ch-icon">😓</div>
+            <div class="ch-body"><span class="ch-main">No, I did not sleep well</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="err" id="err-1">⚠️ Please answer all four questions above before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(0)">← Back</button>
+        <button class="btn-next" onclick="validateKeys(1,['ps1','ps2','ps3','ps4'],2)">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 2 — ORIENTATION (Section 1)
+════════════════════════════════════ -->
+    <div class="page" id="pg-2">
+      <div class="pill p-teal">Section 1 · Orientation — 5 pts</div>
+      <div class="pg-title">Where and When Are We?</div>
+      <p class="pg-sub">Answer all the questions below about today's date and your current location.</p>
+
+      <div class="card">
+        <div class="q-lbl">1. What is today's date? <span>(Fill in day, month and year)</span></div>
+        <div class="grid-3" style="margin-bottom:14px">
+          <div><label class="inp-label">Day (1–31)</label><input class="inp" id="o-day" type="number" min="1" max="31"
+              placeholder="e.g. 14"></div>
+          <div><label class="inp-label">Month (1–12)</label><input class="inp" id="o-month" type="number" min="1"
+              max="12" placeholder="e.g. 6"></div>
+          <div><label class="inp-label">Year</label><input class="inp" id="o-year" type="number" min="2000" max="2100"
+              placeholder="e.g. 2025"></div>
+        </div>
+        <div class="q-lbl" style="margin-bottom:8px">2. What day of the week is it?</div>
+        <div class="day-grid" id="day-grid">
+          <button class="day-btn" onclick="pickDay(this,'Monday')">Mon</button>
+          <button class="day-btn" onclick="pickDay(this,'Tuesday')">Tue</button>
+          <button class="day-btn" onclick="pickDay(this,'Wednesday')">Wed</button>
+          <button class="day-btn" onclick="pickDay(this,'Thursday')">Thu</button>
+          <button class="day-btn" onclick="pickDay(this,'Friday')">Fri</button>
+          <button class="day-btn" onclick="pickDay(this,'Saturday')">Sat</button>
+          <button class="day-btn" onclick="pickDay(this,'Sunday')">Sun</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">3. Where are you right now?</div>
+        <div class="choices" id="cg-oplace">
+          <button class="ch" onclick="pick('oplace','home',this,'cg-oplace')">
+            <div class="ch-icon">🏠</div>
+            <div class="ch-body"><span class="ch-main">At home</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('oplace','hospital',this,'cg-oplace')">
+            <div class="ch-icon">🏥</div>
+            <div class="ch-body"><span class="ch-main">Hospital or clinic</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('oplace','other',this,'cg-oplace')">
+            <div class="ch-icon">📍</div>
+            <div class="ch-body"><span class="ch-main">Somewhere else</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">4. What city or state are you currently in?</div>
+        <input class="inp" id="o-city" type="text" placeholder="Type your city or state...">
+      </div>
+
+      <div class="err" id="err-2">⚠️ Please fill in every field — date, day of week, location, and city/state.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(1)">← Back</button>
+        <button class="btn-next" onclick="validateOrientation()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 3 — MEMORY: LEARN + IMMEDIATE RECALL
+════════════════════════════════════ -->
+    <div class="page" id="pg-3">
+      <div class="pill p-plum">Section 1 · Memory — Immediate Recall — 3 pts</div>
+      <div class="pg-title">Listen to <em>Three Words</em></div>
+      <p class="pg-sub">Press the button below to hear three words spoken aloud. Listen carefully — you will be asked to
+        recall them again later. Then type them back immediately below.</p>
+
+      <div class="card" style="text-align:center">
+        <div id="tts-area" style="padding:20px 0">
+          <button class="btn-next" id="tts-play-btn" onclick="speakMemoryWords()"
+            style="font-size:18px;padding:14px 36px;margin-bottom:14px;display:inline-flex;align-items:center;gap:10px">
+            <span style="font-size:28px">🔊</span> Listen to Words
+          </button>
+          <div id="tts-status" style="font-size:14px;color:var(--txt-l);margin-top:8px;min-height:24px"></div>
+          <div id="tts-word-indicator" style="display:flex;justify-content:center;gap:14px;margin-top:18px">
+            <div class="tts-dot" id="tts-dot-0"
+              style="width:16px;height:16px;border-radius:50%;background:var(--bg-2);border:2px solid var(--plum);transition:all .3s">
+            </div>
+            <div class="tts-dot" id="tts-dot-1"
+              style="width:16px;height:16px;border-radius:50%;background:var(--bg-2);border:2px solid var(--plum);transition:all .3s">
+            </div>
+            <div class="tts-dot" id="tts-dot-2"
+              style="width:16px;height:16px;border-radius:50%;background:var(--bg-2);border:2px solid var(--plum);transition:all .3s">
+            </div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--txt-l);margin-top:10px">Listen carefully and try to remember them.</p>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">Now say all three words back — press each microphone button and speak clearly:</div>
+        <div class="recall-list">
+          <div class="recall-row" style="display:flex;align-items:center;gap:10px">
+            <div class="r-num">1</div>
+            <button class="stt-mic-btn" id="stt-btn-1" onclick="startListening(1)"
+              style="font-size:22px;padding:10px 16px;border-radius:12px;border:2px solid var(--plum);background:var(--bg-2);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px">
+              <span>🎤</span><span style="font-size:13px;font-weight:600;color:var(--plum)">Speak</span>
+            </button>
+            <div class="stt-result" id="stt-result-1" data-value=""
+              style="flex:1;padding:10px 14px;border-radius:10px;background:var(--bg-2);border:2px solid var(--border);min-height:42px;font-size:16px;font-weight:600;color:var(--txt);display:flex;align-items:center">
+              —</div>
+            <button onclick="clearSttResult(1)"
+              style="font-size:14px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--txt-l)"
+              title="Clear">✕</button>
+          </div>
+          <div class="recall-row" style="display:flex;align-items:center;gap:10px">
+            <div class="r-num">2</div>
+            <button class="stt-mic-btn" id="stt-btn-2" onclick="startListening(2)"
+              style="font-size:22px;padding:10px 16px;border-radius:12px;border:2px solid var(--plum);background:var(--bg-2);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px">
+              <span>🎤</span><span style="font-size:13px;font-weight:600;color:var(--plum)">Speak</span>
+            </button>
+            <div class="stt-result" id="stt-result-2" data-value=""
+              style="flex:1;padding:10px 14px;border-radius:10px;background:var(--bg-2);border:2px solid var(--border);min-height:42px;font-size:16px;font-weight:600;color:var(--txt);display:flex;align-items:center">
+              —</div>
+            <button onclick="clearSttResult(2)"
+              style="font-size:14px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--txt-l)"
+              title="Clear">✕</button>
+          </div>
+          <div class="recall-row" style="display:flex;align-items:center;gap:10px">
+            <div class="r-num">3</div>
+            <button class="stt-mic-btn" id="stt-btn-3" onclick="startListening(3)"
+              style="font-size:22px;padding:10px 16px;border-radius:12px;border:2px solid var(--plum);background:var(--bg-2);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px">
+              <span>🎤</span><span style="font-size:13px;font-weight:600;color:var(--plum)">Speak</span>
+            </button>
+            <div class="stt-result" id="stt-result-3" data-value=""
+              style="flex:1;padding:10px 14px;border-radius:10px;background:var(--bg-2);border:2px solid var(--border);min-height:42px;font-size:16px;font-weight:600;color:var(--txt);display:flex;align-items:center">
+              —</div>
+            <button onclick="clearSttResult(3)"
+              style="font-size:14px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--txt-l)"
+              title="Clear">✕</button>
+          </div>
+        </div>
+        <div id="stt-status" style="font-size:13px;color:var(--txt-l);margin-top:10px;min-height:20px"></div>
+      </div>
+
+      <div class="err" id="err-3">⚠️ Please speak all three words before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(2)">← Back</button>
+        <button class="btn-next" onclick="validateMemImmediate()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 4 — ATTENTION: SERIAL 7s
+════════════════════════════════════ -->
+    <div class="page" id="pg-4">
+      <div class="pill p-amber">Section 1 · Attention — 5 pts</div>
+      <div class="pg-title">Counting <em>Backwards</em></div>
+      <p class="pg-sub">Start at 100 and subtract 7 each time. Fill in each answer in the boxes below. Take your time —
+        this tests concentration, not speed.</p>
+
+      <div class="card">
+        <div style="text-align:center;margin-bottom:18px">
+          <div
+            style="font-size:12px;color:var(--txt-l);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">
+            Starting number</div>
+          <div style="font-family:'Fraunces',serif;font-size:52px;font-weight:600;color:var(--teal);line-height:1">100
+          </div>
+        </div>
+        <div class="s7-list">
+          <div class="s7-row"><span class="s7-lbl">100 − 7 =</span><input class="inp inp-sm" id="s7a" type="number"
+              placeholder="?" oninput="liveS7(1)">
+            <div class="s7-indicator s7-pending" id="s7i1">?</div>
+          </div>
+          <div class="s7-row"><span class="s7-lbl">then − 7 =</span><input class="inp inp-sm" id="s7b" type="number"
+              placeholder="?" oninput="liveS7(2)">
+            <div class="s7-indicator s7-pending" id="s7i2">?</div>
+          </div>
+          <div class="s7-row"><span class="s7-lbl">then − 7 =</span><input class="inp inp-sm" id="s7c" type="number"
+              placeholder="?" oninput="liveS7(3)">
+            <div class="s7-indicator s7-pending" id="s7i3">?</div>
+          </div>
+          <div class="s7-row"><span class="s7-lbl">then − 7 =</span><input class="inp inp-sm" id="s7d" type="number"
+              placeholder="?" oninput="liveS7(4)">
+            <div class="s7-indicator s7-pending" id="s7i4">?</div>
+          </div>
+          <div class="s7-row"><span class="s7-lbl">then − 7 =</span><input class="inp inp-sm" id="s7e" type="number"
+              placeholder="?" oninput="liveS7(5)">
+            <div class="s7-indicator s7-pending" id="s7i5">?</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="err" id="err-4">⚠️ Please fill in all five answers before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(3)">← Back</button>
+        <button class="btn-next" onclick="validateSerial7()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 5 — EXECUTIVE: CLOCK DRAWING
+════════════════════════════════════ -->
+    <div class="page" id="pg-5">
+      <div class="pill p-coral">Section 1 · Executive Function — 5 pts</div>
+      <div class="pg-title">Draw a <em>Clock</em></div>
+      <p class="pg-sub">Using the drawing area below, draw a clock face. Include all 12 numbers in the correct
+        positions, and draw two hands showing <strong>11:10 (10 past 11)</strong>.</p>
+
+      <div class="canvas-wrap" id="clock-wrap">
+        <canvas id="clock-cv" height="300"></canvas>
+        <div class="canvas-tools" id="clock-tools">
+          <button class="cvs-btn" onclick="cvClear('clock-cv')">🗑 Clear</button>
+          <button class="cvs-btn" onclick="cvUndo('clock-cv')">↩ Undo</button>
+          <div class="thick-row">
+            <div class="tdot on" style="width:8px;height:8px" onclick="setThick(2,this)"></div>
+            <div class="tdot" style="width:12px;height:12px" onclick="setThick(4,this)"></div>
+            <div class="tdot" style="width:17px;height:17px" onclick="setThick(7,this)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info" style="margin-top:14px"><span class="info-ic">⚠️</span><span>Once you submit your drawing, you
+          <strong>cannot go back and change it</strong>. Make sure you are satisfied before continuing.</span></div>
+
+      <div class="err" id="err-5">⚠️ Please draw something on the canvas before submitting.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(4)">← Back</button>
+        <button class="btn-next" onclick="submitClockDrawing()">Submit Drawing →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 6 — CLOCK DRAWING: CHECKLIST
+════════════════════════════════════ -->
+    <div class="page" id="pg-6">
+      <div class="pill p-coral">Section 1 · Executive Function — Checklist</div>
+      <div class="pg-title">Review Your <em>Clock Drawing</em></div>
+      <p class="pg-sub">Your drawing has been submitted and locked. Now tick everything you included in your drawing.
+      </p>
+
+      <div class="card clock-snapshot-card">
+        <div class="q-lbl" style="text-align:left;margin-bottom:12px">Your submitted drawing:</div>
+        <img id="clock-snapshot" src="" alt="Your clock drawing">
+        <p class="clock-locked-msg">🔒 This drawing is locked and cannot be edited.</p>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="q-lbl">Tick everything you included:</div>
+        <div class="checklist">
+          <div class="check-row" onclick="toggleCheck(this,'clk1')">
+            <div class="check-box">✓</div>I drew a circle for the clock face
+          </div>
+          <div class="check-row" onclick="toggleCheck(this,'clk2')">
+            <div class="check-box">✓</div>I included all 12 numbers
+          </div>
+          <div class="check-row" onclick="toggleCheck(this,'clk3')">
+            <div class="check-box">✓</div>Numbers are in the correct positions
+          </div>
+          <div class="check-row" onclick="toggleCheck(this,'clk4')">
+            <div class="check-box">✓</div>I drew two hands on the clock
+          </div>
+          <div class="check-row" onclick="toggleCheck(this,'clk5')">
+            <div class="check-box">✓</div>The hands show 10 past 11 (11:10)
+          </div>
+        </div>
+      </div>
+
+      <div class="err" id="err-6">⚠️ Please tick at least one checklist item before continuing.</div>
+      <div class="nav">
+        <button class="btn-next" onclick="validateClock()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 7 — LANGUAGE: NAMING
+════════════════════════════════════ -->
+    <div class="page" id="pg-7">
+      <div class="pill p-teal">Section 1 · Language — Task 1 of 3 — 2 pts</div>
+      <div class="pg-title">Name These Objects</div>
+      <p class="pg-sub">Look carefully at the two objects shown. Type the name of each one in the box below it.</p>
+
+      <div class="card">
+        <div class="obj-grid">
+          <div class="obj-wrap">
+            <div class="obj-display"><span class="obj-emoji">⌚</span><span class="obj-sub">Object 1</span></div>
+            <input class="inp" id="lang-o1" type="text" placeholder="What is this called?">
+          </div>
+          <div class="obj-wrap">
+            <div class="obj-display"><span class="obj-emoji">✏️</span><span class="obj-sub">Object 2</span></div>
+            <input class="inp" id="lang-o2" type="text" placeholder="What is this called?">
+          </div>
+        </div>
+      </div>
+
+      <div class="err" id="err-7">⚠️ Please name both objects before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(6)">← Back</button>
+        <button class="btn-next" onclick="validateNaming()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 8 — LANGUAGE: PHRASE REPEAT
+════════════════════════════════════ -->
+    <div class="page" id="pg-8">
+      <div class="pill p-teal">Section 1 · Language — Task 2 of 3 — 1 pt</div>
+      <div class="pg-title">Repeat a <em>Phrase</em></div>
+      <p class="pg-sub">Press the button below to hear a phrase spoken aloud. Listen carefully, then repeat it back
+        using the microphone.</p>
+
+      <div class="card" style="text-align:center">
+        <div id="phrase-tts-area" style="padding:20px 0">
+          <button class="btn-next" id="phrase-play-btn" onclick="speakPhrase()"
+            style="font-size:18px;padding:14px 36px;margin-bottom:14px;display:inline-flex;align-items:center;gap:10px">
+            <span style="font-size:28px">🔊</span> Listen to Phrase
+          </button>
+          <div id="phrase-tts-status" style="font-size:14px;color:var(--txt-l);margin-top:8px;min-height:24px"></div>
+        </div>
+        <p style="font-size:13px;color:var(--txt-l);margin-top:10px">Listen carefully and repeat it back below.</p>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">Now say the phrase back — press the microphone and speak clearly:</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="stt-mic-btn" id="phrase-stt-btn" onclick="startPhraseListening()"
+            style="font-size:22px;padding:10px 16px;border-radius:12px;border:2px solid var(--teal);background:var(--bg-2);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px">
+            <span>🎤</span><span style="font-size:13px;font-weight:600;color:var(--teal)">Speak</span>
+          </button>
+          <div class="stt-result" id="phrase-stt-result" data-value=""
+            style="flex:1;padding:10px 14px;border-radius:10px;background:var(--bg-2);border:2px solid var(--border);min-height:42px;font-size:16px;font-weight:600;color:var(--txt);display:flex;align-items:center">
+            —</div>
+          <button onclick="clearPhraseResult()"
+            style="font-size:14px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--txt-l)"
+            title="Clear">✕</button>
+        </div>
+        <div id="phrase-stt-status" style="font-size:13px;color:var(--txt-l);margin-top:10px;min-height:20px"></div>
+      </div>
+
+      <div class="err" id="err-8">⚠️ Please listen to the phrase and speak it back before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(7)">← Back</button>
+        <button class="btn-next" onclick="validatePhrase()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 9 — LANGUAGE: 3-STEP COMMAND
+════════════════════════════════════ -->
+    <div class="page" id="pg-9">
+      <div class="pill p-teal">Section 1 · Language — Task 3 of 3 — 2 pts</div>
+      <div class="pg-title">Follow These <em>Steps</em></div>
+      <p class="pg-sub">Get a piece of paper and do the three steps below in order. Tick each step off after you have
+        done it.</p>
+
+      <div class="card">
+        <div class="checklist">
+          <div class="check-row" onclick="toggleCheck(this,'cmd1')">
+            <div class="check-box">✓</div>
+            <div><strong>Step 1:</strong> Take a piece of paper in your hand</div>
+          </div>
+          <div class="check-row" onclick="toggleCheck(this,'cmd2')">
+            <div class="check-box">✓</div>
+            <div><strong>Step 2:</strong> Fold the paper in half</div>
+          </div>
+          <div class="check-row" onclick="toggleCheck(this,'cmd3')">
+            <div class="check-box">✓</div>
+            <div><strong>Step 3:</strong> Place the folded paper on the table</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="q-lbl">📸 Upload a photo of the folded paper on the table:</div>
+        <div id="cmd-upload-area" class="upload-area" onclick="document.getElementById('cmd-file-input').click()">
+          <input type="file" id="cmd-file-input" accept="image/*" capture="environment" style="display:none"
+            onchange="previewCmdImage(this)">
+          <div id="cmd-upload-placeholder" class="upload-placeholder">
+            <span style="font-size:42px">📷</span>
+            <p>Tap to take a photo or choose from gallery</p>
+          </div>
+          <img id="cmd-upload-preview" src="" alt="Uploaded photo" class="upload-preview" style="display:none">
+        </div>
+        <button id="cmd-remove-btn" onclick="removeCmdImage(event)" class="upload-remove-btn" style="display:none">✕
+          Remove Photo</button>
+        <div id="fold-eval-result"
+          style="margin-top:14px;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;display:none">
+        </div>
+      </div>
+
+      <div class="err" id="err-9">⚠️ Please tick the steps you were able to complete before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(8)">← Back</button>
+        <button class="btn-next" onclick="validateCommand()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 10 — VISUOSPATIAL: PENTAGONS (DRAWING)
+════════════════════════════════════ -->
+    <div class="page" id="pg-10">
+      <div class="pill p-sage">Section 1 · Visuospatial — Part 1 of 2 — 2 pts</div>
+      <div class="pg-title">Copy This Shape</div>
+      <p class="pg-sub">Study the two overlapping pentagons below. Then draw a copy of them in the drawing area as
+        accurately as you can.</p>
+
+      <div class="penta-ref">
+        <svg viewBox="0 0 240 145" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="48,14 90,14 107,54 72,82 32,54" stroke="#7a9e87" stroke-width="2.5" fill="none" />
+          <polygon points="110,14 170,14 190,54 152,82 90,54" stroke="#7a9e87" stroke-width="2.5" fill="none" />
+        </svg>
+        <p>Reference image — copy this below</p>
+      </div>
+
+      <div class="canvas-wrap" id="penta-wrap">
+        <canvas id="penta-cv" height="230"></canvas>
+        <div class="canvas-tools" id="penta-tools">
+          <button class="cvs-btn" onclick="cvClear('penta-cv')">🗑 Clear</button>
+          <button class="cvs-btn" onclick="cvUndo('penta-cv')">↩ Undo</button>
+        </div>
+      </div>
+
+      <div class="info" style="margin-top:14px"><span class="info-ic">⚠️</span><span>Once you submit your drawing, you
+          <strong>cannot go back and change it</strong>. Make sure you are satisfied before continuing.</span></div>
+
+      <div class="err" id="err-10">⚠️ Please draw something on the canvas before submitting.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(9)">← Back</button>
+        <button class="btn-next" onclick="submitPentaDrawing()">Submit Drawing →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 11 — VISUOSPATIAL: PENTAGONS (SELF-RATING)
+════════════════════════════════════ -->
+    <div class="page" id="pg-11">
+      <div class="pill p-sage">Section 1 · Visuospatial — Self-Rating</div>
+      <div class="pg-title">Rate Your <em>Drawing</em></div>
+      <p class="pg-sub">Your drawing has been submitted and locked. Now rate how well your copy turned out.</p>
+
+      <div class="card clock-snapshot-card">
+        <div class="q-lbl" style="text-align:left;margin-bottom:12px">Your submitted drawing:</div>
+        <img id="penta-snapshot" src="" alt="Your pentagon drawing">
+        <p class="clock-locked-msg">🔒 This drawing is locked and cannot be edited.</p>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="q-lbl">How well did your copy turn out?</div>
+        <div class="choices" id="cg-vis1">
+          <button class="ch" onclick="pick('vis1','both',this,'cg-vis1')">
+            <div class="ch-icon">✅</div>
+            <div class="ch-body"><span class="ch-main">Both pentagon shapes are recognisable and overlapping</span>
+            </div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('vis1','partial',this,'cg-vis1')">
+            <div class="ch-icon">🟡</div>
+            <div class="ch-body"><span class="ch-main">Only one shape is clearly drawn</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('vis1','none',this,'cg-vis1')">
+            <div class="ch-icon">❌</div>
+            <div class="ch-body"><span class="ch-main">I was not able to draw them clearly</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="err" id="err-11">⚠️ Please select how your copy turned out.</div>
+      <div class="nav">
+        <button class="btn-next" onclick="validateKeys(11,['vis1'],12)">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 12 — VISUOSPATIAL: PICTURE ID
+════════════════════════════════════ -->
+    <div class="page" id="pg-12">
+      <div class="pill p-sage">Section 1 · Visuospatial — Part 2 of 2 — 2 pts</div>
+      <div class="pg-title">Identify the Pictures</div>
+      <p class="pg-sub">Look at each picture and select the correct name from the choices shown.</p>
+
+      <div class="card">
+        <div class="q-lbl">What is this? <span>(Picture 1)</span></div>
+        <div style="font-size:72px;text-align:center;margin:14px 0;line-height:1">🚌</div>
+        <div class="pic-grid" id="cg-pic1">
+          <div class="pic-card" onclick="pickPic('pic1','bus',this,'cg-pic1')"><span class="pic-emoji">🚌</span><span
+              class="pic-lbl">Bus</span></div>
+          <div class="pic-card" onclick="pickPic('pic1','car',this,'cg-pic1')"><span class="pic-emoji">🚗</span><span
+              class="pic-lbl">Car</span></div>
+          <div class="pic-card" onclick="pickPic('pic1','train',this,'cg-pic1')"><span class="pic-emoji">🚂</span><span
+              class="pic-lbl">Train</span></div>
+          <div class="pic-card" onclick="pickPic('pic1','plane',this,'cg-pic1')"><span class="pic-emoji">✈️</span><span
+              class="pic-lbl">Plane</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="q-lbl">What is this? <span>(Picture 2)</span></div>
+        <div style="font-size:72px;text-align:center;margin:14px 0;line-height:1">🍎</div>
+        <div class="pic-grid" id="cg-pic2">
+          <div class="pic-card" onclick="pickPic('pic2','orange',this,'cg-pic2')"><span class="pic-emoji">🍊</span><span
+              class="pic-lbl">Orange</span></div>
+          <div class="pic-card" onclick="pickPic('pic2','apple',this,'cg-pic2')"><span class="pic-emoji">🍎</span><span
+              class="pic-lbl">Apple</span></div>
+          <div class="pic-card" onclick="pickPic('pic2','banana',this,'cg-pic2')"><span class="pic-emoji">🍌</span><span
+              class="pic-lbl">Banana</span></div>
+          <div class="pic-card" onclick="pickPic('pic2','grape',this,'cg-pic2')"><span class="pic-emoji">🍇</span><span
+              class="pic-lbl">Grapes</span></div>
+        </div>
+      </div>
+
+      <div class="err" id="err-12">⚠️ Please identify both pictures before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(11)">← Back</button>
+        <button class="btn-next" onclick="validateKeys(12,['pic1','pic2'],13)">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 13 — DELAYED MEMORY RECALL
+════════════════════════════════════ -->
+    <div class="page" id="pg-13">
+      <div class="pill p-plum">Section 1 · Memory — Delayed Recall — 3 pts</div>
+      <div class="pg-title">Do You Remember the <em>Three Words?</em></div>
+      <p class="pg-sub">Earlier you were shown three words. Without looking back, type as many as you can remember
+        below.</p>
+
+      <div class="info"><span class="info-ic">💡</span><span>If you cannot remember a word, here are hints: one was a
+          <strong>fruit</strong>, one was a piece of <strong>essential for human life</strong>, and one was a type of
+          <strong>natural element
+          </strong>. Type <em>"forgot"</em> if you truly cannot recall.</span></div>
+
+      <div class="card">
+        <div class="recall-list">
+          <div class="recall-row">
+            <div class="r-num">1</div><input class="inp" id="del1" type="text" placeholder="First word...">
+          </div>
+          <div class="recall-row">
+            <div class="r-num">2</div><input class="inp" id="del2" type="text" placeholder="Second word...">
+          </div>
+          <div class="recall-row">
+            <div class="r-num">3</div><input class="inp" id="del3" type="text"
+              placeholder="Third word... (type 'forgot' if unsure)">
+          </div>
+        </div>
+      </div>
+
+      <div class="err" id="err-13">⚠️ Please fill in all three fields. Type 'forgot' if you cannot remember a word.
+      </div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(12)">← Back</button>
+        <button class="btn-next" onclick="validateDelayed()">Next →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 14 — FUNCTIONAL ADL (Section 3)
+════════════════════════════════════ -->
+    <div class="page" id="pg-14">
+      <div class="pill p-amber">Section 3 · Daily Life Activities — 10 pts</div>
+      <div class="pg-title">Your Everyday Activities</div>
+      <p class="pg-sub">Answer honestly based on how you have been over the <strong>last few months</strong>. Select one
+        answer for each question.</p>
+
+      <div class="card">
+        <p
+          style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-l);margin-bottom:16px">
+          Everyday Tasks</p>
+
+        <div class="q-lbl">1. Do you have difficulty managing money — for example paying bills or handling change?</div>
+        <div class="choices-2" id="cg-iadl1" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('iadl1','yes',this,'cg-iadl1')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, I have difficulty</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('iadl1','no',this,'cg-iadl1')">
+            <div class="ch-body"><span class="ch-main">✗ No difficulty</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">2. Do you have trouble taking medicines correctly (right dose, right time)?</div>
+        <div class="choices-2" id="cg-iadl2" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('iadl2','yes',this,'cg-iadl2')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, I have trouble</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('iadl2','no',this,'cg-iadl2')">
+            <div class="ch-body"><span class="ch-main">✗ No trouble</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">3. Do you have difficulty cooking meals for yourself?</div>
+        <div class="choices-2" id="cg-iadl3" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('iadl3','yes',this,'cg-iadl3')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('iadl3','no',this,'cg-iadl3')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">4. Do you have difficulty using a phone or TV remote?</div>
+        <div class="choices-2" id="cg-iadl4" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('iadl4','yes',this,'cg-iadl4')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('iadl4','no',this,'cg-iadl4')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">5. Do you have trouble going shopping independently?</div>
+        <div class="choices-2" id="cg-iadl5" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('iadl5','yes',this,'cg-iadl5')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('iadl5','no',this,'cg-iadl5')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">6. Have you ever gotten lost in a place that is familiar to you?</div>
+        <div class="choices-2" id="cg-iadl6">
+          <button class="ch" onclick="pick('iadl6','yes',this,'cg-iadl6')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, this has happened</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('iadl6','no',this,'cg-iadl6')">
+            <div class="ch-body"><span class="ch-main">✗ No, never</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p
+          style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-l);margin-bottom:16px">
+          Personal Care</p>
+
+        <div class="q-lbl">7. Do you need help bathing or showering?</div>
+        <div class="choices-2" id="cg-badl1" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('badl1','yes',this,'cg-badl1')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, I need help</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('badl1','no',this,'cg-badl1')">
+            <div class="ch-body"><span class="ch-main">✗ I manage independently</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">8. Do you need help choosing or putting on clothes?</div>
+        <div class="choices-2" id="cg-badl2" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('badl2','yes',this,'cg-badl2')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, I need help</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('badl2','no',this,'cg-badl2')">
+            <div class="ch-body"><span class="ch-main">✗ I manage independently</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">9. Do you need help eating your meals?</div>
+        <div class="choices-2" id="cg-badl3" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('badl3','yes',this,'cg-badl3')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, I need help</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('badl3','no',this,'cg-badl3')">
+            <div class="ch-body"><span class="ch-main">✗ I manage independently</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">10. Do you need help using the toilet?</div>
+        <div class="choices-2" id="cg-badl4">
+          <button class="ch" onclick="pick('badl4','yes',this,'cg-badl4')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, I need help</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('badl4','no',this,'cg-badl4')">
+            <div class="ch-body"><span class="ch-main">✗ I manage independently</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="err" id="err-14">⚠️ Please answer every question on this page before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(13)">← Back</button>
+        <button class="btn-next"
+          onclick="validateKeys(14,['iadl1','iadl2','iadl3','iadl4','iadl5','iadl6','badl1','badl2','badl3','badl4'],15)">Next
+          →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 15 — BEHAVIOURAL (Section 4)
+════════════════════════════════════ -->
+    <div class="page" id="pg-15">
+      <div class="pill p-rose">Section 4 · Behavioural Changes — 10 pts</div>
+      <div class="pg-title">Changes You Have <em>Noticed</em></div>
+      <p class="pg-sub">Think about how you have been over the <strong>last several months or years</strong> and answer
+        each question.</p>
+
+      <div class="card">
+        <div class="q-lbl">1. Have your memory or thinking difficulties <strong>gradually got worse</strong> over months
+          or years?</div>
+        <div class="choices-2" id="cg-beh1" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('beh1','yes',this,'cg-beh1')">
+            <div class="ch-body"><span class="ch-main">✓ Yes, gradually worse</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('beh1','no',this,'cg-beh1')">
+            <div class="ch-body"><span class="ch-main">✗ No / Sudden change</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">2. Have people around you noticed a change in your <strong>personality or behaviour</strong>?
+        </div>
+        <div class="choices-2" id="cg-beh2" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('beh2','yes',this,'cg-beh2')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('beh2','no',this,'cg-beh2')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">3. Have you experienced <strong>agitation, restlessness, or wandering</strong>?</div>
+        <div class="choices-2" id="cg-beh3" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('beh3','yes',this,'cg-beh3')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('beh3','no',this,'cg-beh3')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">4. Have you seen or heard things that others could not — <strong>hallucinations</strong>?
+        </div>
+        <div class="choices-2" id="cg-beh4" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('beh4','yes',this,'cg-beh4')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('beh4','no',this,'cg-beh4')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">5. Do you experience significant <strong>sleep disturbance</strong>?</div>
+        <div class="choices-2" id="cg-beh5" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('beh5','yes',this,'cg-beh5')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('beh5','no',this,'cg-beh5')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">6. Do you experience <strong>episodes of confusion</strong> — suddenly feeling disoriented?
+        </div>
+        <div class="choices-2" id="cg-beh6">
+          <button class="ch" onclick="pick('beh6','yes',this,'cg-beh6')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('beh6','no',this,'cg-beh6')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="err" id="err-15">⚠️ Please answer all six questions before continuing.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(14)">← Back</button>
+        <button class="btn-next" onclick="validateKeys(15,['beh1','beh2','beh3','beh4','beh5','beh6'],16)">Next
+          →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     PAGE 16 — MOOD FILTER (Section 5)
+════════════════════════════════════ -->
+    <div class="page" id="pg-16">
+      <div class="pill p-plum">Section 5 · Mood & Wellbeing</div>
+      <div class="pg-title">How Have You Been <em>Feeling?</em></div>
+      <p class="pg-sub">These final questions help us understand your emotional wellbeing. Answers are completely
+        confidential and are used only to improve the accuracy of your result.</p>
+
+      <div class="card">
+        <div class="q-lbl">1. Have you been feeling <strong>sad, empty, or hopeless</strong> most days recently?</div>
+        <div class="choices-2" id="cg-mood1" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('mood1','yes',this,'cg-mood1')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('mood1','no',this,'cg-mood1')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">2. Have you <strong>lost interest</strong> in activities you used to enjoy?</div>
+        <div class="choices-2" id="cg-mood2" style="margin-bottom:16px">
+          <button class="ch" onclick="pick('mood2','yes',this,'cg-mood2')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('mood2','no',this,'cg-mood2')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+        <div class="divider"></div>
+
+        <div class="q-lbl">3. Do you feel <strong>very anxious or nervous</strong> while completing this assessment?
+        </div>
+        <div class="choices-2" id="cg-mood3">
+          <button class="ch" onclick="pick('mood3','yes',this,'cg-mood3')">
+            <div class="ch-body"><span class="ch-main">✓ Yes</span></div>
+            <div class="ch-tick"></div>
+          </button>
+          <button class="ch" onclick="pick('mood3','no',this,'cg-mood3')">
+            <div class="ch-body"><span class="ch-main">✗ No</span></div>
+            <div class="ch-tick"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="err" id="err-16">⚠️ Please answer all three questions before submitting.</div>
+      <div class="nav">
+        <button class="btn-back" onclick="goTo(15)">← Back</button>
+        <button class="btn-submit" onclick="validateAndSubmit()">Submit Assessment →</button>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════
+     RESULTS
+════════════════════════════════════ -->
+    <div id="pg-results">
+      <div class="res-hero" id="res-hero">
+        <div class="res-emoji" id="res-emoji">📊</div>
+        <div class="res-title" id="res-title">Assessment Complete</div>
+        <div class="res-verdict" id="res-verdict">–</div>
+        <p class="res-desc" id="res-desc"></p>
+      </div>
+      <div class="scores-grid" id="scores-grid"></div>
+      <div class="flags-card">
+        <div class="flags-title">Clinical Notes</div>
+        <div id="flags-list"></div>
+      </div>
+      <div class="res-btns">
+        <a href="/" class="rb-p">→ Back to Dashboard</a>
+        <button class="rb-s" onclick="location.reload()">↺ Retake</button>
+      </div>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <script>
+    /* ═══════ STATE ═══════ */
+    const TOTAL = 16, S7ANS = [93, 86, 79, 72, 65];
+    let cur = 0;
+    const A = {}, CK = {};
+    let drawThick = 2;
+    const cvHist = {};
+
+    /* ═══════ NAVIGATION ═══════ */
+    function goTo(n) {
+      document.getElementById('pg-' + cur).classList.remove('active');
+      cur = n;
+      const pg = document.getElementById('pg-' + n);
+      if (pg) { pg.classList.add('active') }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      updateProg();
+      if (n === 5) setTimeout(() => initCv('clock-cv'), 80);
+      if (n === 10) setTimeout(() => initCv('penta-cv'), 80);
+    }
+    function updateProg() {
+      const p = Math.round(cur / TOTAL * 100);
+      document.getElementById('prog-fill').style.width = p + '%';
+      document.getElementById('prog-pct').textContent = p + '%';
+    }
+
+    /* ═══════ ANSWER PICKERS ═══════ */
+    function pick(key, val, btn, grpId) {
+      A[key] = val;
+      document.getElementById(grpId).querySelectorAll('.ch').forEach(b => b.classList.remove('sel', 'sel-no'));
+      btn.classList.add(val === 'no' ? 'sel-no' : 'sel');
+    }
+    function pickDay(btn, val) {
+      A['oday'] = val;
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+    }
+    function pickPic(key, val, el, grpId) {
+      A[key] = val;
+      document.getElementById(grpId).querySelectorAll('.pic-card').forEach(c => c.classList.remove('sel'));
+      el.classList.add('sel');
+    }
+    function toggleCheck(el, key) {
+      CK[key] = !CK[key];
+      el.classList.toggle('on', CK[key]);
+    }
+
+    /* ═══════ ERROR DISPLAY ═══════ */
+    function showErr(n) {
+      const e = document.getElementById('err-' + n);
+      e.classList.add('show');
+      const pg = document.getElementById('pg-' + n);
+      pg.classList.add('shake');
+      setTimeout(() => { pg.classList.remove('shake') }, 380);
+      setTimeout(() => { e.classList.remove('show') }, 3500);
+    }
+
+    /* ═══════ TEXT-TO-SPEECH (Memory Words) ═══════ */
+    const MEM_WORDS = ['Apple', 'Water', 'Fire'];
+    let ttsSpeaking = false;
+
+    function speakMemoryWords() {
+      if (ttsSpeaking) return;
+      if (!('speechSynthesis' in window)) {
+        document.getElementById('tts-status').textContent = '⚠️ Your browser does not support speech. Please use Chrome or Edge.';
+        return;
+      }
+      ttsSpeaking = true;
+      window.speechSynthesis.cancel();
+
+      const playBtn = document.getElementById('tts-play-btn');
+      const status = document.getElementById('tts-status');
+      playBtn.style.display = 'none';
+
+      // Reset dots
+      for (let i = 0; i < 3; i++) {
+        const dot = document.getElementById('tts-dot-' + i);
+        dot.style.background = 'var(--bg-2)';
+        dot.style.transform = 'scale(1)';
+        dot.style.boxShadow = 'none';
+      }
+
+      status.textContent = 'Get ready to listen…';
+
+      let wordIndex = 0;
+
+      function speakNext() {
+        if (wordIndex >= MEM_WORDS.length) {
+          status.textContent = '✅ All three words have been spoken. Now recall them below!';
+          ttsSpeaking = false;
+          return;
+        }
+
+        const word = MEM_WORDS[wordIndex];
+        status.textContent = 'Speaking word ' + (wordIndex + 1) + ' of 3…';
+
+        // Highlight current dot
+        const dot = document.getElementById('tts-dot-' + wordIndex);
+        dot.style.background = 'var(--plum)';
+        dot.style.transform = 'scale(1.5)';
+        dot.style.boxShadow = '0 0 12px var(--plum)';
+
+        const utter = new SpeechSynthesisUtterance(word);
+        utter.lang = 'en-US';
+        utter.rate = 0.8;
+        utter.pitch = 1;
+        utter.volume = 1;
+
+        utter.onend = function () {
+          // Shrink dot back but keep it filled
+          dot.style.transform = 'scale(1)';
+          dot.style.boxShadow = 'none';
+          wordIndex++;
+          // Pause 1 second between words
+          setTimeout(speakNext, 1000);
+        };
+
+        utter.onerror = function () {
+          status.textContent = '⚠️ Speech error occurred.';
+          ttsSpeaking = false;
+        };
+
+        window.speechSynthesis.speak(utter);
+      }
+
+      // Small initial delay so user is ready
+      setTimeout(speakNext, 800);
+    }
+
+    /* ═══════ SPEECH-TO-TEXT (Memory Word Recall) ═══════ */
+    let sttActiveSlot = 0;
+    let sttRecognition = null;
+    let sttStopping = false;
+    let sttReady = true;  // cooldown flag — Chrome needs time to release mic
+
+    function resetMicBtn(slot) {
+      const btn = document.getElementById('stt-btn-' + slot);
+      if (!btn) return;
+      btn.style.background = 'var(--bg-2)';
+      btn.style.borderColor = 'var(--plum)';
+      btn.querySelector('span:last-child').style.color = 'var(--plum)';
+      btn.querySelector('span:last-child').textContent = 'Speak';
+      btn.style.animation = 'none';
+    }
+
+    function setMicBtnActive(slot) {
+      const btn = document.getElementById('stt-btn-' + slot);
+      btn.style.background = 'var(--plum)';
+      btn.style.borderColor = 'var(--plum)';
+      btn.querySelector('span:last-child').style.color = '#fff';
+      btn.querySelector('span:last-child').textContent = 'Stop';
+      btn.style.animation = 'stt-pulse 1s ease-in-out infinite';
+    }
+
+    function stopListening() {
+      if (sttRecognition && sttActiveSlot > 0) {
+        sttStopping = true;
+        try { sttRecognition.stop(); } catch (e) { }
+        resetMicBtn(sttActiveSlot);
+        sttActiveSlot = 0;
+      }
+    }
+
+    function startListening(slot) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        document.getElementById('stt-status').textContent = '⚠️ Speech recognition not supported. Please use Chrome or Edge.';
+        return;
+      }
+
+      const statusEl = document.getElementById('stt-status');
+
+      // TOGGLE OFF: if this slot is already listening, stop it
+      if (sttActiveSlot === slot) {
+        stopListening();
+        statusEl.textContent = 'Stopped. Press a mic button to try again.';
+        return;
+      }
+
+      // If another slot is active, stop it first, then start new one after delay
+      if (sttActiveSlot > 0) {
+        stopListening();
+      }
+
+      // If mic is still cooling down from previous session, wait and retry
+      if (!sttReady) {
+        statusEl.textContent = '⏳ Preparing microphone… please wait.';
+        setTimeout(function () { startListening(slot); }, 600);
+        return;
+      }
+
+      beginRecognition(slot);
+    }
+
+    function beginRecognition(slot, retryCount) {
+      retryCount = retryCount || 0;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const resultEl = document.getElementById('stt-result-' + slot);
+      const statusEl = document.getElementById('stt-status');
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;
+
+      sttRecognition = recognition;
+      sttActiveSlot = slot;
+      sttStopping = false;
+
+      setMicBtnActive(slot);
+      statusEl.textContent = '🎙️ Listening for word ' + slot + '… say the word now!';
+
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript.trim();
+        const word = transcript.split(/\s+/)[0].replace(/[^a-zA-Z]/g, '');
+
+        if (word) {
+          const display = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+          resultEl.textContent = display;
+          resultEl.dataset.value = word.toLowerCase();
+          resultEl.style.color = 'var(--plum)';
+          resultEl.style.borderColor = 'var(--plum)';
+          statusEl.textContent = '✅ Word ' + slot + ' recorded: "' + display + '"';
+        } else {
+          statusEl.textContent = '⚠️ Could not understand. Press the mic to try again.';
+        }
+        // Don't call recognition.stop() here — let continuous:false auto-stop
+      };
+
+      recognition.onerror = function (event) {
+        if (event.error === 'aborted' || sttStopping) return;
+        if (event.error === 'no-speech') {
+          statusEl.textContent = '⚠️ No speech detected. Press the mic and say the word.';
+        } else if (event.error === 'not-allowed') {
+          statusEl.textContent = '⚠️ Microphone access denied. Please allow mic access.';
+        } else {
+          statusEl.textContent = '⚠️ Error: ' + event.error + '. Press mic to retry.';
+        }
+      };
+
+      recognition.onend = function () {
+        resetMicBtn(slot);
+        if (sttActiveSlot === slot) sttActiveSlot = 0;
+        sttRecognition = null;
+        sttStopping = false;
+        // Cooldown: block new sessions for 600ms while Chrome releases the mic
+        sttReady = false;
+        setTimeout(function () { sttReady = true; }, 600);
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {
+        // If mic is still busy, retry up to 3 times with increasing delay
+        if (retryCount < 3) {
+          statusEl.textContent = '⏳ Microphone busy… retrying (' + (retryCount + 1) + '/3)';
+          resetMicBtn(slot);
+          sttActiveSlot = 0;
+          sttRecognition = null;
+          setTimeout(function () { beginRecognition(slot, retryCount + 1); }, 500 * (retryCount + 1));
+        } else {
+          statusEl.textContent = '⚠️ Could not start mic. Please wait a moment and try again.';
+          resetMicBtn(slot);
+          sttActiveSlot = 0;
+          sttRecognition = null;
+        }
+      }
+    }
+
+    function clearSttResult(slot) {
+      const resultEl = document.getElementById('stt-result-' + slot);
+      resultEl.textContent = '—';
+      resultEl.dataset.value = '';
+      resultEl.style.color = 'var(--txt)';
+      resultEl.style.borderColor = 'var(--border)';
+      document.getElementById('stt-status').textContent = '';
+    }
+
+    /* ═══════ VALIDATORS ═══════ */
+    /* NOTE: Validation temporarily disabled — all fields optional */
+    function validateKeys(pgN, keys, next) {
+      // if (keys.some(k => !A[k])) { showErr(pgN); return; }
+      if (next === -1) { submitAll(); return; }
+      goTo(next);
+    }
+
+    function validateOrientation() {
+      const d = document.getElementById('o-day').value.trim();
+      const m = document.getElementById('o-month').value.trim();
+      const y = document.getElementById('o-year').value.trim();
+      const c = document.getElementById('o-city').value.trim();
+      // if (!d || !m || !y || !A['oday'] || !A['oplace'] || !c) { showErr(2); return; }
+      A['oday-num'] = d; A['omonth'] = m; A['oyear'] = y; A['ocity'] = c;
+      goTo(3);
+    }
+
+    function validateMemImmediate() {
+      const a = document.getElementById('stt-result-1').dataset.value;
+      const b = document.getElementById('stt-result-2').dataset.value;
+      const cc = document.getElementById('stt-result-3').dataset.value;
+      // if (!a || !b || !cc) { showErr(3); return; }
+      A['imm1'] = a; A['imm2'] = b; A['imm3'] = cc;
+      goTo(4);
+    }
+
+    function validateSerial7() {
+      const ids = ['s7a', 's7b', 's7c', 's7d', 's7e'];
+      // if (ids.some(id => !document.getElementById(id).value.trim())) { showErr(4); return; }
+      ids.forEach((id, i) => A['s7_' + i] = document.getElementById(id).value.trim());
+      goTo(5);
+    }
+
+    function submitClockDrawing() {
+      const cv = document.getElementById('clock-cv');
+      // Save snapshot to the checklist page
+      const snapshot = cv.toDataURL('image/png');
+      document.getElementById('clock-snapshot').src = snapshot;
+      // Lock the canvas — hide tools so it can't be edited
+      document.getElementById('clock-tools').style.display = 'none';
+      // Disable canvas interaction
+      cv.style.pointerEvents = 'none';
+      cv.style.opacity = '0.7';
+      goTo(6);
+    }
+
+    function validateClock() {
+      // if (!Object.keys(CK).some(k => k.startsWith('clk') && CK[k])) { showErr(6); return; }
+      goTo(7);
+    }
+
+    function validateNaming() {
+      const o1 = document.getElementById('lang-o1').value.trim();
+      const o2 = document.getElementById('lang-o2').value.trim();
+      // if (!o1 || !o2) { showErr(7); return; }
+      A['lang-o1'] = o1; A['lang-o2'] = o2;
+      goTo(8);
+    }
+
+    /* ═══════ PHRASE TTS ═══════ */
+    const PHRASE_TEXT = 'You can do more than you think';
+    let phraseTtsDone = false;
+
+    function speakPhrase() {
+      if (phraseTtsDone) return;
+      if (!('speechSynthesis' in window)) {
+        document.getElementById('phrase-tts-status').textContent = '⚠️ Your browser does not support speech.';
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const playBtn = document.getElementById('phrase-play-btn');
+      const status = document.getElementById('phrase-tts-status');
+      playBtn.style.display = 'none';
+      status.textContent = 'Speaking phrase…';
+
+      const utter = new SpeechSynthesisUtterance(PHRASE_TEXT);
+      utter.lang = 'en-US'; utter.rate = 0.85; utter.pitch = 1; utter.volume = 1;
+      utter.onend = function () {
+        status.textContent = '✅ Phrase has been spoken. Now repeat it below!';
+        phraseTtsDone = true;
+      };
+      utter.onerror = function () {
+        status.textContent = '⚠️ Speech error occurred.';
+      };
+      window.speechSynthesis.speak(utter);
+    }
+
+    /* ═══════ PHRASE STT ═══════ */
+    let phraseRecognition = null;
+    let phraseListening = false;
+    let phraseReady = true;
+
+    function startPhraseListening() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        document.getElementById('phrase-stt-status').textContent = '⚠️ Speech recognition not supported.';
+        return;
+      }
+      const btn = document.getElementById('phrase-stt-btn');
+      const statusEl = document.getElementById('phrase-stt-status');
+
+      // Toggle off
+      if (phraseListening && phraseRecognition) {
+        try { phraseRecognition.stop(); } catch (e) { }
+        btn.style.background = 'var(--bg-2)';
+        btn.querySelector('span:last-child').textContent = 'Speak';
+        btn.style.animation = 'none';
+        phraseListening = false;
+        statusEl.textContent = 'Stopped. Press mic to try again.';
+        return;
+      }
+
+      // Cooldown
+      if (!phraseReady) {
+        statusEl.textContent = '⏳ Preparing microphone…';
+        setTimeout(function () { startPhraseListening(); }, 600);
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;
+
+      phraseRecognition = recognition;
+      phraseListening = true;
+
+      btn.style.background = 'var(--teal)';
+      btn.style.borderColor = 'var(--teal)';
+      btn.querySelector('span:last-child').style.color = '#fff';
+      btn.querySelector('span:last-child').textContent = 'Stop';
+      btn.style.animation = 'stt-pulse 1s ease-in-out infinite';
+      statusEl.textContent = '🎙️ Listening… say the phrase now!';
+
+      const resultEl = document.getElementById('phrase-stt-result');
+
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript.trim();
+        if (transcript) {
+          resultEl.textContent = transcript;
+          resultEl.dataset.value = transcript.toLowerCase();
+          resultEl.style.color = 'var(--teal)';
+          resultEl.style.borderColor = 'var(--teal)';
+          statusEl.textContent = '✅ Phrase recorded: "' + transcript + '"';
+        } else {
+          statusEl.textContent = '⚠️ Could not understand. Press mic to try again.';
+        }
+      };
+
+      recognition.onerror = function (event) {
+        if (event.error === 'aborted') return;
+        if (event.error === 'no-speech') {
+          statusEl.textContent = '⚠️ No speech detected. Press mic and speak.';
+        } else if (event.error === 'not-allowed') {
+          statusEl.textContent = '⚠️ Microphone access denied.';
+        } else {
+          statusEl.textContent = '⚠️ Error: ' + event.error;
+        }
+      };
+
+      recognition.onend = function () {
+        btn.style.background = 'var(--bg-2)';
+        btn.style.borderColor = 'var(--teal)';
+        btn.querySelector('span:last-child').style.color = 'var(--teal)';
+        btn.querySelector('span:last-child').textContent = 'Speak';
+        btn.style.animation = 'none';
+        phraseListening = false;
+        phraseRecognition = null;
+        phraseReady = false;
+        setTimeout(function () { phraseReady = true; }, 600);
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {
+        statusEl.textContent = '⚠️ Could not start mic. Wait a moment and try again.';
+        btn.style.background = 'var(--bg-2)';
+        btn.querySelector('span:last-child').textContent = 'Speak';
+        btn.style.animation = 'none';
+        phraseListening = false;
+        phraseRecognition = null;
+      }
+    }
+
+    function clearPhraseResult() {
+      const resultEl = document.getElementById('phrase-stt-result');
+      resultEl.textContent = '—';
+      resultEl.dataset.value = '';
+      resultEl.style.color = 'var(--txt)';
+      resultEl.style.borderColor = 'var(--border)';
+      document.getElementById('phrase-stt-status').textContent = '';
+    }
+
+    function validatePhrase() {
+      const p = document.getElementById('phrase-stt-result').dataset.value || '';
+      // if (!p) { showErr(8); return; }
+      A['lang-phrase'] = p;
+      goTo(9);
+    }
+
+    /* ═══════ COMMAND IMAGE UPLOAD ═══════ */
+    function previewCmdImage(input) {
+      if (!input.files || !input.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const preview = document.getElementById('cmd-upload-preview');
+        const placeholder = document.getElementById('cmd-upload-placeholder');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        document.getElementById('cmd-remove-btn').style.display = 'block';
+        A['cmd-photo'] = e.target.result;
+
+        // Evaluate the fold
+        evaluateFold(e.target.result);
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+
+    function evaluateFold(imageData) {
+      const evalDiv = document.getElementById('fold-eval-result');
+      evalDiv.style.display = 'block';
+      evalDiv.style.background = 'var(--cream-dark)';
+      evalDiv.style.color = 'var(--txt-m)';
+      evalDiv.style.border = '1px solid var(--bdr)';
+      evalDiv.textContent = '⏳ Evaluating your fold... please wait.';
+
+      fetch('/evaluate-fold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            A['fold-result'] = data.result;
+            A['fold-confidence'] = data.confidence;
+            evalDiv.textContent = data.message + ' (Confidence: ' + data.confidence + '%)';
+            if (data.result === 'properly_folded') {
+              evalDiv.style.background = 'var(--teal-p)';
+              evalDiv.style.color = 'var(--teal)';
+              evalDiv.style.border = '1px solid rgba(61,158,140,.3)';
+            } else {
+              evalDiv.style.background = 'var(--amber-p)';
+              evalDiv.style.color = 'var(--amber)';
+              evalDiv.style.border = '1px solid rgba(212,148,58,.3)';
+            }
+          } else {
+            evalDiv.textContent = '⚠️ ' + (data.message || 'Could not evaluate the image.');
+            evalDiv.style.background = 'var(--coral-p)';
+            evalDiv.style.color = 'var(--coral)';
+            evalDiv.style.border = '1px solid rgba(224,122,95,.3)';
+          }
+        })
+        .catch(err => {
+          evalDiv.textContent = '⚠️ Could not connect to evaluation server.';
+          evalDiv.style.background = 'var(--coral-p)';
+          evalDiv.style.color = 'var(--coral)';
+          evalDiv.style.border = '1px solid rgba(224,122,95,.3)';
+        });
+    }
+
+    function removeCmdImage(e) {
+      e.stopPropagation();
+      document.getElementById('cmd-upload-preview').style.display = 'none';
+      document.getElementById('cmd-upload-preview').src = '';
+      document.getElementById('cmd-upload-placeholder').style.display = 'block';
+      document.getElementById('cmd-remove-btn').style.display = 'none';
+      document.getElementById('cmd-file-input').value = '';
+      document.getElementById('fold-eval-result').style.display = 'none';
+      delete A['cmd-photo'];
+      delete A['fold-result'];
+      delete A['fold-confidence'];
+    }
+
+    function validateCommand() {
+      // if (!Object.keys(CK).some(k => k.startsWith('cmd') && CK[k])) { showErr(9); return; }
+      goTo(10);
+    }
+
+    function submitPentaDrawing() {
+      const cv = document.getElementById('penta-cv');
+      const snapshot = cv.toDataURL('image/png');
+      document.getElementById('penta-snapshot').src = snapshot;
+      document.getElementById('penta-tools').style.display = 'none';
+      cv.style.pointerEvents = 'none';
+      cv.style.opacity = '0.7';
+      goTo(11);
+    }
+
+    function validateDelayed() {
+      const a = document.getElementById('del1').value.trim();
+      const b = document.getElementById('del2').value.trim();
+      const c = document.getElementById('del3').value.trim();
+      // if (!a || !b || !c) { showErr(13); return; }
+      A['del1'] = a; A['del2'] = b; A['del3'] = c;
+      goTo(14);
+    }
+
+    function validateAndSubmit() {
+      // if (['mood1', 'mood2', 'mood3'].some(k => !A[k])) { showErr(16); return; }
+      submitAll();
+    }
+
+    /* ═══════ SERIAL 7 LIVE FEEDBACK ═══════ */
+    function liveS7(n) {
+      const ids = ['s7a', 's7b', 's7c', 's7d', 's7e'];
+      const v = parseInt(document.getElementById(ids[n - 1]).value);
+      const ind = document.getElementById('s7i' + n);
+      if (isNaN(v)) { ind.className = 's7-indicator s7-pending'; ind.textContent = '?'; return; }
+      if (v === S7ANS[n - 1]) { ind.className = 's7-indicator s7-ok'; ind.textContent = '✓' }
+      else { ind.className = 's7-indicator s7-err'; ind.textContent = '✗' }
+    }
+
+    /* ═══════ CANVAS ═══════ */
+    function initCv(id) {
+      const cv = document.getElementById(id);
+      if (!cv || cv.dataset.init) return;
+      cv.dataset.init = '1';
+      cv.width = cv.parentElement.clientWidth || 620;
+      cvHist[id] = [];
+      const ctx = cv.getContext('2d');
+      ctx.strokeStyle = '#2d2a26'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      let down = false, lx = 0, ly = 0;
+      const pos = e => { const r = cv.getBoundingClientRect(); const s = e.touches ? e.touches[0] : e; return { x: (s.clientX - r.left) * (cv.width / r.width), y: (s.clientY - r.top) * (cv.height / r.height) } };
+      const start = e => { down = true; const p = pos(e); lx = p.x; ly = p.y; e.preventDefault() };
+      const move = e => { if (!down) return; e.preventDefault(); const p = pos(e); ctx.lineWidth = drawThick; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(p.x, p.y); ctx.stroke(); lx = p.x; ly = p.y };
+      const end = () => { if (down) cvHist[id].push(cv.toDataURL()); down = false };
+      cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); cv.addEventListener('mouseup', end); cv.addEventListener('mouseleave', end);
+      cv.addEventListener('touchstart', start, { passive: false }); cv.addEventListener('touchmove', move, { passive: false }); cv.addEventListener('touchend', end);
+    }
+    function cvClear(id) { const cv = document.getElementById(id); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); cvHist[id] = []; }
+    function cvUndo(id) { const h = cvHist[id]; const cv = document.getElementById(id); const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height); if (h.length > 1) { h.pop(); const img = new Image(); img.src = h[h.length - 1]; img.onload = () => ctx.drawImage(img, 0, 0) } else h.length = 0 }
+    function setThick(v, el) { drawThick = v; document.querySelectorAll('.tdot').forEach(d => d.classList.remove('on')); el.classList.add('on') }
+
+    /* ═══════ SCORING ═══════ */
+    function nm(s) { return (s || '').toLowerCase().replace(/[^a-z]/g, '') }
+    function has(inp, targets) { return targets.some(t => nm(inp).includes(nm(t))) }
+
+    function calcAll() {
+      // Orientation (5)
+      const now = new Date();
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      let ori = 0;
+      if (parseInt(A['oday-num']) === now.getDate()) ori++;
+      if (A['oday'] === days[now.getDay()]) ori++;
+      if (parseInt(A['omonth']) === now.getMonth() + 1) ori++;
+      if (A['oplace']) ori++;
+      if ((A['ocity'] || '').length > 1) ori++;
+
+      // Immediate memory (3)
+      const allImm = [A['imm1'], A['imm2'], A['imm3']];
+      let immMem = 0;
+      if (allImm.some(w => has(w, ['apple']))) immMem++;
+      if (allImm.some(w => has(w, ['water']))) immMem++;
+      if (allImm.some(w => has(w, ['fire']))) immMem++;
+
+      // Attention serial 7s (5)
+      let attn = 0;
+      ['s7a', 's7b', 's7c', 's7d', 's7e'].forEach((id, i) => { if (parseInt(A['s7_' + i]) === S7ANS[i]) attn++ });
+
+      // Executive clock (5)
+      const exec = ['clk1', 'clk2', 'clk3', 'clk4', 'clk5'].filter(k => CK[k]).length;
+
+      // Language (5)
+      let lang = 0;
+      if (has(A['lang-o1'], ['watch', 'clock', 'wristwatch'])) lang++;
+      if (has(A['lang-o2'], ['pen', 'pencil', 'marker'])) lang++;
+      const phrase = nm(A['lang-phrase'] || '');
+      if (phrase.includes('noifs') || phrase.includes('ifsands') || phrase === nm('No ifs ands or buts')) lang++;
+      const cmdDone = ['cmd1', 'cmd2', 'cmd3'].filter(k => CK[k]).length;
+      lang += cmdDone >= 3 ? 2 : cmdDone >= 1 ? 1 : 0;
+
+      // Visuospatial (4)
+      let vis = 0;
+      if (A['vis1'] === 'both') vis += 2; else if (A['vis1'] === 'partial') vis += 1;
+      if (A['pic1'] === 'bus') vis++;
+      if (A['pic2'] === 'apple') vis++;
+
+      // Delayed memory (3)
+      const allDel = [A['del1'], A['del2'], A['del3']];
+      let delMem = 0;
+      if (allDel.some(w => has(w, ['apple']))) delMem++;
+      if (allDel.some(w => has(w, ['water']))) delMem++;
+      if (allDel.some(w => has(w, ['fire']))) delMem++;
+
+      const cognitive = ori + immMem + attn + exec + lang + vis + delMem;
+
+      // ADL
+      const iadlC = ['iadl1', 'iadl2', 'iadl3', 'iadl4', 'iadl5', 'iadl6'].filter(k => A[k] === 'yes').length;
+      const badlC = ['badl1', 'badl2', 'badl3', 'badl4'].filter(k => A[k] === 'yes').length;
+
+      // Behavioural
+      const beh = (A['beh1'] === 'yes' ? 2 : 0) + (A['beh2'] === 'yes' ? 2 : 0) + (A['beh3'] === 'yes' ? 2 : 0) + (A['beh4'] === 'yes' ? 2 : 0) + (A['beh5'] === 'yes' ? 1 : 0) + (A['beh6'] === 'yes' ? 1 : 0);
+      const progression = A['beh1'] === 'yes';
+      const moodYes = ['mood1', 'mood2', 'mood3'].filter(k => A[k] === 'yes').length;
+
+      return { ori, immMem, attn, exec, lang, vis, delMem, cognitive, iadlC, badlC, beh, progression, moodYes };
+    }
+
+    /* ═══════ FIREBASE READY GUARD ═══════
+       window._fbReady is set by the module at the bottom.
+       This fallback ensures .then() calls never throw even if the
+       module hasn't loaded yet (resolves when module eventually loads).
+    ══════════════════════════════════════ */
+    if (!window._fbReady) {
+      window._fbReady = new Promise(function (resolve) {
+        (function wait() {
+          if (window.saveScoresToFirebase) { resolve(window.saveScoresToFirebase); }
+          else { setTimeout(wait, 50); }
+        })();
+      });
+    }
+
+    /* ═══════ SUBMIT ═══════ */
+    function submitAll() {
+      const s = calcAll();
+
+      // Hide all pages
+      for (let i = 0; i <= TOTAL; i++) { const p = document.getElementById('pg-' + i); if (p) p.classList.remove('active') }
+      document.querySelector('.hdr-mid').style.display = 'none';
+      document.getElementById('prog-fill').style.width = '100%';
+      document.getElementById('prog-pct').textContent = '100%';
+
+      const rp = document.getElementById('pg-results');
+      rp.classList.add('active');
+
+      // Interpret
+      const highRisk = s.cognitive < 24 && s.iadlC >= 2 && s.progression;
+      let verdict, vCls, heroCls, emoji, title, desc;
+
+      if (highRisk) {
+        verdict = 'High Risk — Screening Positive'; vCls = 'rv-high'; heroCls = 'rh-high';
+        emoji = '⚠️'; title = 'Screening Indicates High Risk';
+        desc = 'Your cognitive score, functional difficulties, and symptom progression together suggest a high risk for cognitive decline. Please speak with a doctor or specialist as soon as possible for a full evaluation.';
+      } else if (s.cognitive < 24 && s.iadlC < 2) {
+        verdict = 'Mild Cognitive Impairment (MCI)'; vCls = 'rv-mild'; heroCls = 'rh-mild';
+        emoji = '🟡'; title = 'Possible Mild Cognitive Impairment';
+        desc = 'Your cognitive scores show some concern, but daily activities are not significantly affected. This may indicate Mild Cognitive Impairment. Regular monitoring is recommended.';
+      } else if (s.cognitive >= 26) {
+        verdict = 'Normal Cognitive Function'; vCls = 'rv-good'; heroCls = 'rh-good';
+        emoji = '✅'; title = 'Cognitive Function Appears Normal';
+        desc = 'Your scores across all areas are within the normal range. No significant concern is indicated at this time. Routine health monitoring is still encouraged.';
+      } else {
+        verdict = 'Moderate Cognitive Concern'; vCls = 'rv-mod'; heroCls = 'rh-mod';
+        emoji = '🟠'; title = 'Moderate Cognitive Concern';
+        desc = 'Some areas of cognitive function show concern. A follow-up consultation with a healthcare provider is recommended.';
+      }
+
+      document.getElementById('res-hero').className = 'res-hero ' + heroCls;
+      document.getElementById('res-emoji').textContent = emoji;
+      document.getElementById('res-title').textContent = title;
+      document.getElementById('res-desc').textContent = desc;
+      const ve = document.getElementById('res-verdict');
+      ve.textContent = verdict; ve.className = 'res-verdict ' + vCls;
+
+      // Score cards
+      const colors = { teal: 'var(--teal)', plum: 'var(--plum)', amber: 'var(--amber)', coral: 'var(--coral)', sage: 'var(--sage)' };
+      const cards = [
+        { l: 'Orientation', v: s.ori, m: 5, c: 'teal' },
+        { l: 'Imm. Memory', v: s.immMem, m: 3, c: 'plum' },
+        { l: 'Attention', v: s.attn, m: 5, c: 'amber' },
+        { l: 'Executive', v: s.exec, m: 5, c: 'coral' },
+        { l: 'Language', v: s.lang, m: 5, c: 'teal' },
+        { l: 'Visuospatial', v: s.vis, m: 4, c: 'sage' },
+        { l: 'Delayed Memory', v: s.delMem, m: 3, c: 'plum' },
+      ];
+      const sg = document.getElementById('scores-grid'); sg.innerHTML = '';
+      cards.forEach(cc => {
+        const pct = Math.round(cc.v / cc.m * 100);
+        const d = document.createElement('div'); d.className = 'sc';
+        d.innerHTML = `<div class="sc-lbl">${cc.l}</div><div class="sc-val" style="color:${colors[cc.c]}">${cc.v}<span style="font-size:13px;color:var(--txt-l);font-family:'Plus Jakarta Sans',sans-serif"> / ${cc.m}</span></div><div class="sc-bar"><div class="sc-bar-fill" style="background:${colors[cc.c]};width:${pct}%"></div></div>`;
+        sg.appendChild(d);
+      });
+      // Total cognitive
+      const tot = document.createElement('div'); tot.className = 'sc'; tot.style.cssText = 'border-color:rgba(61,158,140,.3);background:var(--teal-p)';
+      tot.innerHTML = `<div class="sc-lbl" style="color:var(--teal)">Total Cognitive Score</div><div class="sc-val" style="color:var(--teal);font-size:30px">${s.cognitive}<span style="font-size:13px;color:var(--txt-l);font-family:'Plus Jakarta Sans',sans-serif"> / 30</span></div><div class="sc-bar"><div class="sc-bar-fill" style="background:linear-gradient(90deg,var(--teal),var(--teal-l));width:${Math.round(s.cognitive / 30 * 100)}%"></div></div>`;
+      sg.appendChild(tot);
+
+      // Flags
+      const flags = [];
+      if (s.moodYes >= 2) flags.push({ t: 'warn', i: '💜', m: 'Mood filter positive — 2 or more mood indicators reported. A depression evaluation is recommended as mood can affect cognitive test performance.' });
+      if (s.progression) flags.push({ t: 'alert', i: '📈', m: 'Gradual symptom progression reported — a key indicator used in dementia risk classification.' });
+      if (s.iadlC >= 2) flags.push({ t: 'alert', i: '🏠', m: `${s.iadlC} instrumental daily-life difficulties reported. Functional impairment is a significant factor in the final risk classification.` });
+      if (s.badlC > 0) flags.push({ t: 'alert', i: '🤝', m: `${s.badlC} basic care activities require assistance, indicating more advanced functional decline.` });
+      if (s.cognitive >= 26) flags.push({ t: 'ok', i: '✅', m: 'Cognitive total is within the normal range (26–30). All major domains tested within normal limits.' });
+      if (!s.progression && s.iadlC < 2) flags.push({ t: 'ok', i: '✅', m: 'No significant functional impairment or symptom progression detected. Continue regular health check-ups.' });
+
+      const fl = document.getElementById('flags-list'); fl.innerHTML = '';
+      flags.forEach(f => { const d = document.createElement('div'); d.className = 'fi fi-' + f.t; d.innerHTML = `<span>${f.i}</span><span>${f.m}</span>`; fl.appendChild(d) });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (s.cognitive >= 22) boom();
+
+      // ═══════ COMPUTE 14 SOFTWARE FEATURES FOR ML MODEL ═══════
+      // Naming sub-scores (2 items from lang section)
+      const namingCorrect =
+        (has(A['lang-o1'], ['watch', 'clock', 'wristwatch']) ? 1 : 0) +
+        (has(A['lang-o2'], ['pen', 'pencil', 'marker']) ? 1 : 0);
+      const phraseStr = nm(A['lang-phrase'] || '');
+      const phraseMatch = phraseStr.includes('noifs') || phraseStr.includes('ifsands') || phraseStr === nm('No ifs ands or buts');
+
+      const softwareFeatures = {
+        immediate_recall: s.immMem / 3,                                        // 0–1
+        delayed_recall: s.delMem / 3,                                        // 0–1
+        cue_benefit_index: (s.immMem > 0 && s.delMem > 0) ? Math.min(1, s.delMem / s.immMem) : 0.5,
+        retention_ratio: s.immMem > 0 ? Math.min(1, s.delMem / s.immMem) : 0.5,
+        orientation_score: s.ori / 5,                                           // 0–1
+        serial7s_score: s.attn / 5,                                          // 0–1
+        clock_drawing_score: s.exec / 5,                                          // 0–1
+        reaction_time_ms: 700,                                                 // default (updated below if N-Back played)
+        error_consistency_norm: 0.2,                                                 // default (updated below if Memory played)
+        naming_task_score: namingCorrect / 2,                                   // 0–1
+        sentence_repetition_score: phraseMatch ? 1.0 : 0.0,
+        verbal_fluency_wpm: (s.lang / 5) * 14,                                   // mapped to ~WPM
+        iadl_impairment_count: s.iadlC,                                             // raw 0–6
+        mood_filter: s.moodYes >= 2 ? 1 : 0
+      };
+
+      console.log('[ML] Computed 14 software features:', softwareFeatures);
+
+      // Backend and Firebase (original flow)
+      const quizScores = {
+        total: Math.round(s.cognitive / 30 * 100),
+        memory: Math.round((s.immMem + s.delMem) / 6 * 100),
+        orientation: Math.round(s.ori / 5 * 100),
+        language: Math.round(s.lang / 5 * 100),
+        attention: Math.round(s.attn / 5 * 100)
+      };
+
+      // Save questionnaire scores + all 12 survey-derived mlParams to Firebase
+      window._fbReady.then(function (saveScores) {
+        saveScores({
+          questionnaire: quizScores,
+          // ── 12 survey-derived ML software parameters ──────────────────────
+          'mlParams.immediate_recall': softwareFeatures.immediate_recall,
+          'mlParams.delayed_recall': softwareFeatures.delayed_recall,
+          'mlParams.cue_benefit_index': softwareFeatures.cue_benefit_index,
+          'mlParams.retention_ratio': softwareFeatures.retention_ratio,
+          'mlParams.orientation_score': softwareFeatures.orientation_score,
+          'mlParams.serial7s_score': softwareFeatures.serial7s_score,
+          'mlParams.clock_drawing_score': softwareFeatures.clock_drawing_score,
+          'mlParams.naming_task_score': softwareFeatures.naming_task_score,
+          'mlParams.sentence_repetition_score': softwareFeatures.sentence_repetition_score,
+          'mlParams.verbal_fluency_wpm': softwareFeatures.verbal_fluency_wpm,
+          'mlParams.iadl_impairment_count': softwareFeatures.iadl_impairment_count,
+          'mlParams.mood_filter': softwareFeatures.mood_filter
+          // Note: mlParams.reaction_time_ms  → saved by N-Back game
+          //       mlParams.error_consistency_norm → saved by Memory game
+        });
+      });
+
+      // Also tell the backend (for server-side ML prediction)
+      fetch('/update_scores', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionnaire: quizScores,
+          cognitive_raw: s.cognitive,
+          functional_raw: s.iadlC + s.badlC,
+          behavioural_raw: s.beh
+        })
+      }).then(v => v.json()).then(res => {
+        // Update Firebase with ML prediction if backend returned one
+        if (res.mlPrediction !== undefined) {
+          window._fbReady.then(function (saveScores) {
+            saveScores({ mlPrediction: res.mlPrediction });
+          });
+        }
+      }).catch(() => { });
+
+      // ═══════ SEND TO RENDER ML MODEL ═══════
+      // device_id is registered at signup and linked to the user's ESP32
+      const deviceId = sessionStorage.getItem('nb_device_id') || '';
+      const payload = { ...softwareFeatures, device_id: deviceId };
+
+      // Change this to your deployed Render URL when ready
+      // example: 'https://innowah-ml-api.onrender.com/predict_raw'
+      const renderApiUrl = '/api/render_predict'; // routes through app.py
+
+      fetch(renderApiUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(v => v.json()).then(mlRes => {
+        console.log('[ML] Render prediction (device:', deviceId, ', hw_used:', mlRes.hardware_used, '):', mlRes);
+
+        // Use Render result if available, otherwise use local fallback
+        const prediction = mlRes.used_render ? mlRes.render_result : mlRes.local_result;
+        if (!prediction) return;
+
+        // Add ML prediction flag to the results page
+        const mlFlag = document.createElement('div');
+        mlFlag.className = 'fi fi-' + (prediction.risk_level === 'Normal' ? 'ok' : prediction.risk_level === 'Mild Risk' ? 'warn' : 'alert');
+        mlFlag.innerHTML = `<span>🤖</span><span><strong>ML Model Prediction:</strong> ${prediction.risk_level} (Risk Score: ${prediction.risk_score}/100). Method: ${prediction.method || (mlRes.used_render ? 'Render API' : 'Local Engine')}. ${prediction.recommendation || ''}</span>`;
+        document.getElementById('flags-list').appendChild(mlFlag);
+
+        // Add domain score cards from ML
+        if (prediction.domain_scores) {
+          const domColors = { memory: 'plum', reasoning: 'amber', visuospatial: 'sage', language: 'teal', behavior: 'coral' };
+          const domGrid = document.getElementById('scores-grid');
+          Object.entries(prediction.domain_scores).forEach(([dom, score]) => {
+            const dc = document.createElement('div'); dc.className = 'sc';
+            dc.style.borderColor = 'rgba(124,95,138,.2)';
+            dc.innerHTML = `<div class="sc-lbl">ML: ${dom.charAt(0).toUpperCase() + dom.slice(1)}</div><div class="sc-val" style="color:${colors[domColors[dom]] || 'var(--plum)'}">${score}<span style="font-size:13px;color:var(--txt-l);font-family:'Plus Jakarta Sans',sans-serif"> /100</span></div><div class="sc-bar"><div class="sc-bar-fill" style="background:${colors[domColors[dom]] || 'var(--plum)'};width:${Math.min(score, 100)}%"></div></div>`;
+            domGrid.appendChild(dc);
+          });
+        }
+
+        // Save ML prediction via promise (always resolves)
+        window._fbReady.then(function (saveScores) {
+          saveScores({
+            mlPrediction: prediction.risk_score,
+            mlRiskLevel: prediction.risk_level
+          });
+        });
+      }).catch(err => { console.warn('[ML] Render predict failed:', err); });
+    }
+
+    /* ═══════ CONFETTI ═══════ */
+    function boom() {
+      const cv = document.getElementById('confetti'); const ctx = cv.getContext('2d');
+      cv.width = innerWidth; cv.height = innerHeight;
+      const cols = ['#3d9e8c', '#d4943a', '#7c5f8a', '#7a9e87', '#e07a5f', '#5bb8a4'];
+      const ps = Array.from({ length: 90 }, () => ({ x: Math.random() * cv.width, y: -10 - Math.random() * 150, w: 7 + Math.random() * 6, h: 3 + Math.random() * 4, c: cols[~~(Math.random() * cols.length)], vx: (Math.random() - .5) * 2.5, vy: 2 + Math.random() * 3, r: Math.random() * 360, rs: (Math.random() - .5) * 5, o: 1 }));
+      let f = 0;
+      (function draw() {
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        let alive = false;
+        ps.forEach(p => {
+          if (p.y > cv.height + 20) return; alive = true;
+          p.x += p.vx; p.y += p.vy; p.r += p.rs;
+          if (p.y > cv.height * .65) p.o -= .018;
+          ctx.save(); ctx.globalAlpha = Math.max(0, p.o); ctx.translate(p.x, p.y); ctx.rotate(p.r * Math.PI / 180);
+          ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+        });
+        if (alive && f++ < 280) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, cv.width, cv.height);
+      })();
+    }
+  </script>
+
+  <!-- Firebase — promise-based so scores always save even if user submits instantly -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, updateDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // _fbReady resolves to the save function — any .then() queues safely
+    window._fbReady = (async () => {
+      const _app = initializeApp({
+        apiKey: "AIzaSyDv7BgLJM-xiwv1AWQJGrADRZnemWGgiUI",
+        authDomain: "dementia-screening.firebaseapp.com",
+        projectId: "dementia-screening",
+        storageBucket: "dementia-screening.firebasestorage.app",
+        messagingSenderId: "948621756070",
+        appId: "1:948621756070:web:dc2a7bcc43c1c3557a1667"
+      }, "questionnaire-app");
+      const _db = getFirestore(_app);
+
+      return async function saveScores(scoreData) {
+        const uid = sessionStorage.getItem('nb_uid');
+        if (!uid) { console.warn('[Firebase] No uid — questionnaire scores not saved.'); return; }
+        try {
+          const u = {};
+          if (scoreData.questionnaire !== undefined) u['scores.questionnaire'] = scoreData.questionnaire;
+          if (scoreData.mlPrediction !== undefined) u['scores.mlPrediction'] = scoreData.mlPrediction;
+          if (scoreData.mlRiskLevel !== undefined) u['scores.mlRiskLevel'] = scoreData.mlRiskLevel;
+          // Forward all mlParams.* dot-notation keys directly to Firestore
+          Object.entries(scoreData).forEach(([k, v]) => {
+            if (k.startsWith('mlParams.')) u[k] = v;
+          });
+          u['scores.lastUpdated'] = serverTimestamp();
+          u['mlParams.lastUpdated'] = serverTimestamp();
+          await updateDoc(doc(_db, 'users', uid), u);
+          console.log('[Firebase] Questionnaire ✓ saved (mlParams + scores):', u);
+        } catch (e) { console.error('[Firebase] Write failed:', e.message); }
+      };
+    })();
+
+    // also expose as window.saveScoresToFirebase for compatibility
+    window._fbReady.then(fn => { window.saveScoresToFirebase = fn; });
+  </script>
+</body>
+
+</html>

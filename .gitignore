@@ -1,28 +1,18 @@
-# Firebase build and deployment files
-/firebase-debug.log
-/firebase-debug.*.log
-.firebaserc
+# Deployment Cleanup
+not_for_deployment/
+hardware_ml_modell/
+data/
+saved_models/
+*.csv
+model/innowah_synthetic_data.csv
 
-# Firebase Hosting
-/firebase.json
-*.cache
-hosting/.cache
-
-# Firebase Functions
-/functions/node_modules/
-/functions/.env
-/functions/package-lock.json
-
-# Firebase Emulators
-/firebase-*.zip
-/.firebase/
-/emulator-ui/
-
-# Logs
+# Environment
+__pycache__/
+*.pyc
+env/
+venv/
+.venv/
+.DS_Store
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Environment files (local configs)
-/.env.*
+# git commit -m "ML MODEL PARAMETERS UPDATED"

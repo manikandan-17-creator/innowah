@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCare — Memory Game</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="static/memory_style.css">
+
+</head>
+
+<body>
+
+    <!-- Confetti canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- ── HEADER ── -->
+    <header>
+        <a href="/" class="logo">
+            <div class="logo-mark">🧠</div>
+            <div>
+                <div class="logo-name">Mind<span>Care</span></div>
+            </div>
+        </a>
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+    </header>
+
+    <!-- ── GAME LAYOUT ── -->
+    <div class="game-wrap">
+
+        <!-- LEFT PANEL -->
+        <div class="panel-left">
+
+            <div class="game-title-block">
+                <div class="game-eyebrow">
+                    <div class="eyebrow-dot"></div>Memory Assessment
+                </div>
+                <h1 class="game-title">Test Your <em>Memory</em><br>& Recall</h1>
+                <p class="game-subtitle">Flip cards to find matching pairs. Your speed and accuracy are measured to
+                    assess your short-term memory function.</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stat-card sc-pairs">
+                <div class="stat-icon si-teal">✓</div>
+                <div class="stat-body">
+                    <div class="stat-label">Pairs Found</div>
+                    <div class="stat-value sv-teal" id="stat-pairs">0 / 8</div>
+                </div>
+            </div>
+            <div class="stat-card sc-mistakes">
+                <div class="stat-icon si-coral">✗</div>
+                <div class="stat-body">
+                    <div class="stat-label">Mistakes</div>
+                    <div class="stat-value sv-coral" id="stat-mistakes">0</div>
+                </div>
+            </div>
+            <div class="stat-card sc-time">
+                <div class="stat-icon si-amber">⏱</div>
+                <div class="stat-body">
+                    <div class="stat-label">Time Elapsed</div>
+                    <div class="stat-value sv-amber" id="stat-time">0:00</div>
+                </div>
+            </div>
+            <div class="stat-card sc-attempts">
+                <div class="stat-icon si-plum">🎯</div>
+                <div class="stat-body">
+                    <div class="stat-label">Attempts</div>
+                    <div class="stat-value sv-plum" id="stat-attempts">0</div>
+                </div>
+            </div>
+
+            <!-- How to play -->
+            <div class="how-card">
+                <div class="how-title">How to Play</div>
+                <div class="how-row">
+                    <div class="how-num">1</div>
+                    <div class="how-text">Click any card to reveal its symbol</div>
+                </div>
+                <div class="how-row">
+                    <div class="how-num">2</div>
+                    <div class="how-text">Click a second card to find its match</div>
+                </div>
+                <div class="how-row">
+                    <div class="how-num">3</div>
+                    <div class="how-text">Matched pairs stay flipped and turn green</div>
+                </div>
+                <div class="how-row">
+                    <div class="how-num">4</div>
+                    <div class="how-text">Match all 8 pairs as fast as you can!</div>
+                </div>
+            </div>
+
+            <button class="btn-restart" onclick="initGame()">↺ Restart Game</button>
+
+        </div>
+
+        <!-- BOARD (CENTER) -->
+        <div class="board-wrap">
+            <div class="board" id="board"></div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel-right">
+
+            <!-- Live score preview -->
+            <div class="score-preview">
+                <div class="sp-title">Live Score Estimate</div>
+                <div class="sp-score-big" id="live-score">–</div>
+                <div class="sp-score-label">/ 100 pts</div>
+                <div class="sp-bars">
+                    <div class="sp-bar-row">
+                        <span class="sp-bar-label">Accuracy</span>
+                        <div class="sp-bar-track">
+                            <div class="sp-bar-fill spb-accuracy" id="bar-accuracy"></div>
+                        </div>
+                        <span class="sp-bar-val" id="val-accuracy">–</span>
+                    </div>
+                    <div class="sp-bar-row">
+                        <span class="sp-bar-label">Errors</span>
+                        <div class="sp-bar-track">
+                            <div class="sp-bar-fill spb-errors" id="bar-errors"></div>
+                        </div>
+                        <span class="sp-bar-val" id="val-errors">–</span>
+                    </div>
+                    <div class="sp-bar-row">
+                        <span class="sp-bar-label">Speed</span>
+                        <div class="sp-bar-track">
+                            <div class="sp-bar-fill spb-speed" id="bar-speed"></div>
+                        </div>
+                        <span class="sp-bar-val" id="val-speed">–</span>
+                    </div>
+                    <div class="sp-bar-row">
+                        <span class="sp-bar-label">Efficiency</span>
+                        <div class="sp-bar-track">
+                            <div class="sp-bar-fill spb-efficiency" id="bar-efficiency"></div>
+                        </div>
+                        <span class="sp-bar-val" id="val-efficiency">–</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pair tracker -->
+            <div class="pair-grid">
+                <div class="pg-title">Pairs Matched</div>
+                <div class="pg-dots" id="pg-dots"></div>
+            </div>
+
+            <!-- Progress ring -->
+            <div class="progress-block">
+                <div class="progress-ring-wrap">
+                    <svg class="progress-ring-svg" width="72" height="72" viewBox="0 0 72 72">
+                        <circle class="pr-track" cx="36" cy="36" r="30" />
+                        <circle class="pr-fill" id="pr-fill" cx="36" cy="36" r="30" />
+                    </svg>
+                    <div class="pr-label" id="pr-label">0%</div>
+                </div>
+                <div class="progress-text-block">
+                    <div class="progress-title" id="progress-title">Ready to Begin</div>
+                    <div class="progress-sub" id="progress-sub">Flip your first card to start</div>
+                </div>
+            </div>
+
+            <!-- Tip -->
+            <div class="tip-card">
+                <div class="tip-label">💡 Memory Tip</div>
+                <div class="tip-text" id="tip-text">Try to associate each symbol with a vivid image or story.
+                    Visualisation greatly improves recall speed.</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ── RESULT OVERLAY ── -->
+    <div class="overlay" id="overlay">
+        <div class="result-modal">
+            <div class="rm-emoji" id="rm-emoji">🎉</div>
+            <div class="rm-title">Game Complete!</div>
+            <div class="rm-sub" id="rm-sub">Well done on completing the Memory Assessment.</div>
+            <div class="rm-score-big" id="rm-score">--</div>
+            <div class="rm-score-label">Memory Score</div>
+            <div class="rm-stats">
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-teal" id="rm-accuracy">--%</div>
+                    <div class="rm-stat-lbl">Accuracy</div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-coral" id="rm-mistakes">0</div>
+                    <div class="rm-stat-lbl">Mistakes</div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-amber" id="rm-time">0:00</div>
+                    <div class="rm-stat-lbl">Time</div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-plum" id="rm-efficiency">--%</div>
+                    <div class="rm-stat-lbl">Efficiency</div>
+                </div>
+            </div>
+            <div class="rm-btns">
+                <button class="rm-btn-primary" onclick="closeOverlayAndRestart()">↺ Play Again</button>
+                <a href="/" class="rm-btn-secondary">→ Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════
+           GAME DATA & STATE
+        ══════════════════════════════════════════ */
+        const SYMBOLS = ["🧠", "⭐", "🍎", "🚗", "🐶", "🎵", "❤️", "⚡"];
+        const TOTAL_PAIRS = 8;
+
+        const TIPS = [
+            "Try to associate each symbol with a vivid image or story.",
+            "Chunking — group similar symbols together to remember them faster.",
+            "Scan the whole board before clicking — build a mental map.",
+            "Repetition builds memory traces. Each mistake actually helps you remember!",
+            "Focus on the position, not just the symbol. Spatial memory is powerful.",
+        ];
+
+        let firstCard = null, lockBoard = false;
+        let attempts = 0, mistakes = 0, matchedPairs = 0;
+        let matchTimes = [], firstClickTime = 0;
+        let startTime = null, timerInterval = null;
+        let gameActive = false;
+
+        /* ══════════════════════════════════════════
+           INIT
+        ══════════════════════════════════════════ */
+        function initGame() {
+            // Reset state
+            firstCard = null; lockBoard = false;
+            attempts = 0; mistakes = 0; matchedPairs = 0;
+            matchTimes = []; startTime = null; gameActive = false;
+            clearInterval(timerInterval);
+
+            // Reset UI
+            document.getElementById('stat-pairs').textContent = `0 / ${TOTAL_PAIRS}`;
+            document.getElementById('stat-mistakes').textContent = '0';
+            document.getElementById('stat-time').textContent = '0:00';
+            document.getElementById('stat-attempts').textContent = '0';
+            document.getElementById('live-score').textContent = '–';
+            document.getElementById('bar-accuracy').style.width = '0%';
+            document.getElementById('bar-errors').style.width = '0%';
+            document.getElementById('bar-speed').style.width = '0%';
+            document.getElementById('bar-efficiency').style.width = '0%';
+            document.getElementById('val-accuracy').textContent = '–';
+            document.getElementById('val-errors').textContent = '–';
+            document.getElementById('val-speed').textContent = '–';
+            document.getElementById('val-efficiency').textContent = '–';
+            document.getElementById('pr-fill').style.strokeDashoffset = 188.5;
+            document.getElementById('pr-label').textContent = '0%';
+            document.getElementById('progress-title').textContent = 'Ready to Begin';
+            document.getElementById('progress-sub').textContent = 'Flip your first card to start';
+            document.getElementById('tip-text').textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+
+            // Build pair dots
+            const pgDots = document.getElementById('pg-dots');
+            pgDots.innerHTML = '';
+            for (let i = 0; i < TOTAL_PAIRS; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'pg-dot';
+                dot.id = `dot-${i}`;
+                pgDots.appendChild(dot);
+            }
+
+            // Shuffle and build board
+            const deck = [...SYMBOLS, ...SYMBOLS].sort(() => 0.5 - Math.random());
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+
+            deck.forEach((sym, idx) => {
+                const outer = document.createElement('div');
+                outer.className = 'card-outer';
+                outer.dataset.value = sym;
+                outer.dataset.idx = idx;
+                outer.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back"></div>
+                <div class="card-face card-front">${sym}</div>
+            </div>`;
+                outer.addEventListener('click', () => onCardClick(outer));
+                board.appendChild(outer);
+            });
+
+            document.getElementById('overlay').classList.remove('visible');
+        }
+
+        /* ══════════════════════════════════════════
+           CARD CLICK
+        ══════════════════════════════════════════ */
+        function onCardClick(card) {
+            if (lockBoard || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+            // Start timer on first flip
+            if (!gameActive) {
+                gameActive = true;
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 500);
+            }
+
+            card.classList.add('flipped');
+
+            if (!firstCard) {
+                firstCard = card;
+                firstClickTime = Date.now();
+                return;
+            }
+
+            // Second card
+            lockBoard = true;
+            attempts++;
+            document.getElementById('stat-attempts').textContent = attempts;
+
+            if (firstCard.dataset.value === card.dataset.value) {
+                // MATCH
+                const recallTime = Date.now() - firstClickTime;
+                matchTimes.push(recallTime);
+                matchedPairs++;
+
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    firstCard.classList.add('matched');
+                    card.classList.remove('flipped');
+                    card.classList.add('matched');
+
+                    document.getElementById('stat-pairs').textContent = `${matchedPairs} / ${TOTAL_PAIRS}`;
+                    updateDot(matchedPairs - 1);
+                    updateRing();
+                    updateLiveScore();
+                    resetTurn();
+
+                    if (matchedPairs === TOTAL_PAIRS) {
+                        clearInterval(timerInterval);
+                        setTimeout(finishGame, 500);
+                    }
+                }, 350);
+            } else {
+                // MISMATCH
+                mistakes++;
+                document.getElementById('stat-mistakes').textContent = mistakes;
+
+                firstCard.classList.add('wrong');
+                card.classList.add('wrong');
+
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped', 'wrong');
+                    card.classList.remove('flipped', 'wrong');
+                    updateLiveScore();
+                    resetTurn();
+                }, 700);
+            }
+        }
+
+        function resetTurn() {
+            firstCard = null;
+            lockBoard = false;
+        }
+
+        /* ══════════════════════════════════════════
+           TIMER
+        ══════════════════════════════════════════ */
+        function updateTimer() {
+            if (!startTime) return;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const m = Math.floor(elapsed / 60);
+            const s = elapsed % 60;
+            document.getElementById('stat-time').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function getElapsedSeconds() {
+            if (!startTime) return 0;
+            return (Date.now() - startTime) / 1000;
+        }
+
+        /* ══════════════════════════════════════════
+           PROGRESS RING & DOTS
+        ══════════════════════════════════════════ */
+        function updateRing() {
+            const pct = matchedPairs / TOTAL_PAIRS;
+            const circ = 188.5;
+            document.getElementById('pr-fill').style.strokeDashoffset = circ * (1 - pct);
+            document.getElementById('pr-label').textContent = Math.round(pct * 100) + '%';
+
+            const messages = [
+                ['Ready to Begin', 'Flip your first card to start'],
+                ['Good Start!', 'Keep going, focus on positions'],
+                ['Building Momentum', 'Great recall so far!'],
+                ['Halfway There!', 'Your memory is working well'],
+                ['Almost Done!', 'Excellent concentration'],
+                ['Last Pair!', 'You\'re doing brilliantly'],
+                ['Complete!', 'Outstanding memory performance'],
+            ];
+            const idx = Math.min(Math.round(pct * (messages.length - 1)), messages.length - 1);
+            document.getElementById('progress-title').textContent = messages[idx][0];
+            document.getElementById('progress-sub').textContent = messages[idx][1];
+        }
+
+        function updateDot(idx) {
+            const dot = document.getElementById(`dot-${idx}`);
+            if (dot) { dot.classList.add('found'); dot.textContent = '✓'; }
+        }
+
+        /* ══════════════════════════════════════════
+           LIVE SCORE ESTIMATE
+        ══════════════════════════════════════════ */
+        function calcScore() {
+            if (attempts === 0) return { total: 0, accuracy: 0, errorRate: 0, timeScore: 0, efficiency: 0 };
+
+            // 1. Accuracy (50%) — Correct pairs ÷ Total pairs
+            const accuracy = matchedPairs / TOTAL_PAIRS; // 0 to 1
+
+            // 2. Error Rate (20%) — 1 - (mistakes / total attempts)
+            const errorRate = attempts > 0 ? mistakes / attempts : 0; // 0 to 1
+            const errorScore = 1 - errorRate; // higher = better
+
+            // 3. Time Score (15%) — Total time, ideal ≤ 60s, max penalty at 180s+
+            const elapsed = getElapsedSeconds();
+            const timeScore = elapsed <= 60 ? 1 : Math.max(0, 1 - (elapsed - 60) / 120); // linear decay 60–180s
+
+            // 4. Efficiency (15%) — Optimal clicks (TOTAL_PAIRS * 2) ÷ actual total clicks (attempts * 2)
+            const optimalClicks = TOTAL_PAIRS * 2;
+            const actualClicks = attempts * 2;
+            const efficiencyScore = Math.min(1, optimalClicks / actualClicks); // 0 to 1, capped at 1
+
+            // Weighted total
+            let total = (accuracy * 50) + (errorScore * 20) + (timeScore * 15) + (efficiencyScore * 15);
+            total = Math.max(0, Math.min(100, total));
+
+            return {
+                total: Math.round(total * 10) / 10,
+                accuracy: Math.round(accuracy * 100),
+                errorRate: Math.round(errorRate * 100),
+                errorScore: Math.round(errorScore * 100),
+                timeScore: Math.round(timeScore * 100),
+                efficiency: Math.round(efficiencyScore * 100)
+            };
+        }
+
+        function updateLiveScore() {
+            if (matchedPairs === 0 && attempts === 0) return;
+            const s = calcScore();
+            document.getElementById('live-score').textContent = s.total;
+            document.getElementById('bar-accuracy').style.width = s.accuracy + '%';
+            document.getElementById('bar-errors').style.width = s.errorScore + '%';
+            document.getElementById('bar-speed').style.width = s.timeScore + '%';
+            document.getElementById('bar-efficiency').style.width = s.efficiency + '%';
+            document.getElementById('val-accuracy').textContent = s.accuracy + '%';
+            document.getElementById('val-errors').textContent = (100 - s.errorRate) + '%';
+            document.getElementById('val-speed').textContent = s.timeScore + '%';
+            document.getElementById('val-efficiency').textContent = s.efficiency + '%';
+        }
+
+        /* ══════════════════════════════════════════
+           FINISH GAME
+        ══════════════════════════════════════════ */
+        function finishGame() {
+            const s = calcScore();
+            const finalScore = Number(s.total.toFixed(2));
+            const elapsed = getElapsedSeconds();
+            const m = Math.floor(elapsed / 60);
+            const sec = Math.round(elapsed % 60);
+            const timeStr = `${m}:${sec.toString().padStart(2, '0')}`;
+
+            // Emoji + message based on score
+            let emoji = '🎉', msg = 'Excellent memory performance!';
+            if (finalScore >= 80) { emoji = '🌟'; msg = 'Outstanding! Your memory recall is excellent.'; }
+            else if (finalScore >= 60) { emoji = '🎉'; msg = 'Well done! Good memory performance.'; }
+            else if (finalScore >= 40) { emoji = '🙂'; msg = 'Not bad! Some room to improve your recall speed.'; }
+            else { emoji = '💪'; msg = 'Keep practising — memory improves with repetition!'; }
+
+            document.getElementById('rm-emoji').textContent = emoji;
+            document.getElementById('rm-sub').textContent = msg;
+            document.getElementById('rm-score').textContent = finalScore;
+            document.getElementById('rm-accuracy').textContent = s.accuracy + '%';
+            document.getElementById('rm-mistakes').textContent = mistakes;
+            document.getElementById('rm-time').textContent = timeStr;
+            document.getElementById('rm-efficiency').textContent = s.efficiency + '%';
+
+            document.getElementById('overlay').classList.add('visible');
+            launchConfetti();
+
+            // Compute error_consistency_norm for ML model: mistake rate 0-1
+            const totalAttempts = matchedPairs * 2 + mistakes; // each pair needs 2 flips min
+            const errorConsistency = totalAttempts > 0 ? Math.min(1, mistakes / Math.max(totalAttempts, 1)) : 0.2;
+            const ecNorm = Math.round(errorConsistency * 1000) / 1000;
+
+            // Save score + error_consistency_norm to Firebase
+            fetch('/update_scores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ memory_score: finalScore, error_consistency_norm: ecNorm })
+            }).then(v => v.json()).then(res => {
+                if (window.saveScoresToFirebase) {
+                    const fbData = { memory: finalScore, 'mlParams.error_consistency_norm': ecNorm };
+                    if (res.mlPrediction !== undefined) fbData.mlPrediction = res.mlPrediction;
+                    window.saveScoresToFirebase(fbData);
+                }
+            }).catch(err => console.error('Score send error:', err));
+        }
+
+        function closeOverlayAndRestart() {
+            document.getElementById('overlay').classList.remove('visible');
+            setTimeout(initGame, 300);
+        }
+
+        /* ══════════════════════════════════════════
+           CONFETTI
+        ══════════════════════════════════════════ */
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+
+            const colors = ['#3d9e8c', '#d4943a', '#e07a5f', '#7c5f8a', '#7a9e87', '#5bb8a4'];
+            const pieces = Array.from({ length: 120 }, () => ({
+                x: Math.random() * canvas.width,
+                y: -10 - Math.random() * 200,
+                w: 8 + Math.random() * 8,
+                h: 4 + Math.random() * 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vx: (Math.random() - 0.5) * 3,
+                vy: 2 + Math.random() * 4,
+                rot: Math.random() * 360,
+                rSpeed: (Math.random() - 0.5) * 6,
+                opacity: 1,
+            }));
+
+            let frame = 0;
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+                pieces.forEach(p => {
+                    if (p.y > canvas.height + 20) return;
+                    alive = true;
+                    p.x += p.vx; p.y += p.vy;
+                    p.rot += p.rSpeed;
+                    if (p.y > canvas.height * 0.7) p.opacity -= 0.015;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.opacity);
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                frame++;
+                if (alive && frame < 300) requestAnimationFrame(draw);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            draw();
+        }
+
+        /* Start */
+        initGame();
+    </script>
+
+    <!-- Firebase: inline module — saves memory score + error_consistency_norm as ML param -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        const _fbApp = initializeApp({
+            apiKey: "AIzaSyDv7BgLJM-xiwv1AWQJGrADRZnemWGgiUI",
+            authDomain: "dementia-screening.firebaseapp.com",
+            projectId: "dementia-screening",
+            storageBucket: "dementia-screening.firebasestorage.app",
+            messagingSenderId: "948621756070",
+            appId: "1:948621756070:web:dc2a7bcc43c1c3557a1667"
+        }, "memory-app");
+        const _db = getFirestore(_fbApp);
+        window.saveScoresToFirebase = async function (scoreData) {
+            const uid = sessionStorage.getItem('nb_uid');
+            if (!uid) { console.warn('[Firebase] No user logged in.'); return; }
+            try {
+                const u = {};
+                if (scoreData.memory !== undefined) u['scores.memory'] = scoreData.memory;
+                if (scoreData.mlPrediction !== undefined) u['scores.mlPrediction'] = scoreData.mlPrediction;
+                if (scoreData.mlRiskLevel !== undefined) u['scores.mlRiskLevel'] = scoreData.mlRiskLevel;
+                // ML software parameter: error consistency from Memory game
+                if (scoreData['mlParams.error_consistency_norm'] !== undefined)
+                    u['mlParams.error_consistency_norm'] = scoreData['mlParams.error_consistency_norm'];
+                u['scores.lastUpdated'] = serverTimestamp();
+                u['mlParams.lastUpdated'] = serverTimestamp();
+                await updateDoc(doc(_db, 'users', uid), u);
+                console.log('[Firebase] Memory scores + mlParams saved:', u);
+            } catch (err) { console.error('[Firebase] Save error:', err.message); }
+        };
+    </script>
+</body>
+
+</html>

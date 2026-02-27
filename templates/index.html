@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroMind+ — Dementia Screening</title>
+    <link rel="stylesheet" href="static/index_style.css">
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- ══════════════════════════
+         HEADER
+    ══════════════════════════ -->
+        <header>
+            <a href="/" class="logo">
+                <div class="logo-mark">🧠</div>
+                <div>
+                    <div class="logo-name">Neuro<span>Band+</span></div>
+                    <div class="logo-tagline">Dementia Screening Platform</div>
+                </div>
+            </a>
+            <div class="header-right">
+                <div class="live-badge">
+                    <div class="live-dot"></div>
+                    <span>Live Session</span>
+                </div>
+                <div class="header-time" id="clock">--:--:--</div>
+                <a href="/signup" id="header-auth-btn" class="header-auth-btn">Log In</a>
+            </div>
+        </header>
+
+
+        <!-- ══════════════════════════
+         MAIN
+    ══════════════════════════ -->
+        <main>
+
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-left">
+                    <div class="hero-eyebrow">
+                        <div class="eyebrow-dot"></div>
+                        Assessment Dashboard
+                    </div>
+                    <h1>Your <em>Cognitive Health</em><br>at a Glance</h1>
+                    <p class="hero-desc">
+                        Complete all three assessments to generate your detailed dementia screening analysis in real
+                        time.
+                    </p>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-num" id="stat-complete">0</div>
+                        <div class="hero-stat-label">of 3 complete</div>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-num">~15</div>
+                        <div class="hero-stat-label">min total</div>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-num">AI</div>
+                        <div class="hero-stat-label">powered result</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Progress Banner -->
+            <div class="progress-banner">
+                <div class="pb-left">
+                    <div class="pb-title">Your Progress</div>
+                    <div class="pb-sub">Complete each step in any order</div>
+                </div>
+                <div class="pb-steps">
+                    <div class="pb-step pending" id="step-memory">
+                        <div class="pb-step-num">1</div>Memory Game
+                    </div>
+                    <div class="pb-connector"></div>
+                    <div class="pb-step pending" id="step-nback">
+                        <div class="pb-step-num">2</div>N-Back Test
+                    </div>
+                    <div class="pb-connector"></div>
+                    <div class="pb-step pending" id="step-quiz">
+                        <div class="pb-step-num">3</div>Questionnaire
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ── SECTION: Assessment Scores ── -->
+            <div class="sec-label">Assessment Scores</div>
+
+            <!-- 3-column score cards -->
+            <div class="scores-grid">
+
+                <!-- Memory Score -->
+                <div class="card card-memory">
+                    <div class="card-blush"></div>
+                    <div class="card-head">
+                        <div class="c-icon ci-teal">🧠</div>
+                        <span class="c-badge cb-teal">Memory</span>
+                    </div>
+                    <div class="c-label">Memory Game Score</div>
+                    <div class="score-area">
+                        <div class="ring-container">
+                            <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+                                <circle class="ring-track" cx="36" cy="36" r="30" />
+                                <circle class="ring-prog" id="rp-memory" cx="36" cy="36" r="30" stroke="#3d9e8c" />
+                            </svg>
+                            <div class="ring-inner">
+                                <span class="ring-pct sn-teal" id="rc-memory">–</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="score-number sn-teal" id="memory">--</div>
+                            <div class="score-meta">out of 100 pts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- N-Back Score -->
+                <div class="card card-nback">
+                    <div class="card-blush"></div>
+                    <div class="card-head">
+                        <div class="c-icon ci-plum">🎯</div>
+                        <span class="c-badge cb-plum">N-Back</span>
+                    </div>
+                    <div class="c-label">N-Back Game Score</div>
+                    <div class="score-area">
+                        <div class="ring-container">
+                            <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+                                <circle class="ring-track" cx="36" cy="36" r="30" />
+                                <circle class="ring-prog" id="rp-nback" cx="36" cy="36" r="30" stroke="#7c5f8a" />
+                            </svg>
+                            <div class="ring-inner">
+                                <span class="ring-pct sn-plum" id="rc-nback">–</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="score-number sn-plum" id="nback">--</div>
+                            <div class="score-meta">out of 100 pts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questionnaire Score -->
+                <div class="card card-quiz-score">
+                    <div class="card-blush"></div>
+                    <div class="card-head">
+                        <div class="c-icon ci-amber">📝</div>
+                        <span class="c-badge cb-amber">Survey</span>
+                    </div>
+                    <div class="c-label">Questionnaire Score</div>
+
+                    <!-- State A: not yet attempted -->
+                    <div class="quiz-awaiting-wrap" id="quiz-awaiting-wrap">
+                        <div class="quiz-awaiting">
+                            <div class="quiz-awaiting-icon">📋</div>
+                            <div class="quiz-awaiting-label">Not yet attempted</div>
+                            <div class="quiz-awaiting-hint">Complete the questionnaire below to see your score and
+                                breakdown here.</div>
+                        </div>
+                    </div>
+
+                    <!-- State B: completed — score + breakdown -->
+                    <div class="quiz-score-wrap" id="quiz-score-wrap">
+                        <div class="score-area" style="margin-bottom:16px;">
+                            <div class="ring-container">
+                                <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+                                    <circle class="ring-track" cx="36" cy="36" r="30" />
+                                    <circle class="ring-prog" id="rp-quiz" cx="36" cy="36" r="30" stroke="#d4943a" />
+                                </svg>
+                                <div class="ring-inner">
+                                    <span class="ring-pct sn-amber" id="rc-quiz">–</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="score-number sn-amber" id="quiz-score">--</div>
+                                <div class="score-meta">out of 100 pts</div>
+                            </div>
+                        </div>
+                        <!-- Sub-score breakdown -->
+                        <div class="quiz-breakdown">
+                            <div class="qb-row">
+                                <span class="qb-label">Memory</span>
+                                <div class="qb-bar-track">
+                                    <div class="qb-bar-fill" id="qb-memory" style="background:var(--teal);"></div>
+                                </div>
+                                <span class="qb-val sn-teal" id="qbv-memory">–</span>
+                            </div>
+                            <div class="qb-row">
+                                <span class="qb-label">Orientation</span>
+                                <div class="qb-bar-track">
+                                    <div class="qb-bar-fill" id="qb-orient" style="background:var(--plum);"></div>
+                                </div>
+                                <span class="qb-val sn-plum" id="qbv-orient">–</span>
+                            </div>
+                            <div class="qb-row">
+                                <span class="qb-label">Language</span>
+                                <div class="qb-bar-track">
+                                    <div class="qb-bar-fill" id="qb-lang" style="background:var(--sage);"></div>
+                                </div>
+                                <span class="qb-val sn-sage" id="qbv-lang">–</span>
+                            </div>
+                            <div class="qb-row">
+                                <span class="qb-label">Attention</span>
+                                <div class="qb-bar-track">
+                                    <div class="qb-bar-fill" id="qb-attn" style="background:var(--amber);"></div>
+                                </div>
+                                <span class="qb-val sn-amber" id="qbv-attn">–</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- ── SECTION: Final ML Result ── -->
+            <div class="sec-label" style="margin-top:8px;">Final ML Result</div>
+
+            <div class="result-card">
+                <div class="result-card-blush"></div>
+                <div class="result-inner">
+
+                    <!-- Big score -->
+                    <div class="result-score-wrap">
+                        <div class="result-score-label">ML Prediction</div>
+                        <div class="result-score-num" id="final">--</div>
+                        <div class="result-score-unit">Classification Score</div>
+                    </div>
+
+                    <!-- Risk bar -->
+                    <div class="result-main">
+                        <div class="result-title">Final Cognitive Assessment</div>
+                        <div class="result-sub">Based on your Memory, N-Back and Questionnaire results, our ML model has
+                            analysed your cognitive profile.</div>
+                        <div class="risk-header">
+                            <span class="risk-title">Risk Level</span>
+                            <span class="risk-pct" id="risk-pct">–</span>
+                        </div>
+                        <div class="risk-track">
+                            <div class="risk-fill" id="risk-bar"></div>
+                        </div>
+                        <div id="risk" class="risk-pill rp-waiting">
+                            <div class="rp-dot" style="background:var(--text-light)"></div>
+                            Awaiting all assessments
+                        </div>
+                    </div>
+
+                    <!-- Mini breakdown -->
+                    <div class="result-breakdown">
+                        <div class="rb-title">Score Summary</div>
+                        <div class="rb-row">
+                            <div class="rb-dot" style="background:var(--teal)"></div>
+                            <span class="rb-label">Memory</span>
+                            <span class="rb-val rb-teal" id="rb-memory">--</span>
+                        </div>
+                        <div class="rb-row">
+                            <div class="rb-dot" style="background:var(--plum)"></div>
+                            <span class="rb-label">N-Back</span>
+                            <span class="rb-val rb-plum" id="rb-nback">--</span>
+                        </div>
+                        <div class="rb-row">
+                            <div class="rb-dot" style="background:var(--amber)"></div>
+                            <span class="rb-label">Survey</span>
+                            <span class="rb-val rb-amber" id="rb-quiz">--</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- ── SECTION: Start Assessments ── -->
+            <div class="divider"></div>
+            <div class="sec-label">Start an Assessment</div>
+
+            <div class="actions-grid">
+
+                <!-- Memory Game -->
+                <a href="/memory" class="action-card ac-memory">
+                    <div class="ac-icon ci-teal">🧠</div>
+                    <div class="ac-body">
+                        <div class="ac-title">Memory Game</div>
+                        <div class="ac-desc">Pattern recall · Spatial memory · Sequences</div>
+                    </div>
+                    <div class="ac-play">▶</div>
+                </a>
+
+                <!-- N-Back Game -->
+                <a href="/n-back" class="action-card ac-nback">
+                    <div class="ac-icon ci-plum">🎯</div>
+                    <div class="ac-body">
+                        <div class="ac-title">N-Back Test</div>
+                        <div class="ac-desc">Working memory · Focus · Cognitive load</div>
+                    </div>
+                    <div class="ac-play">▶</div>
+                </a>
+
+                <!-- Questionnaire -->
+                <a href="/questionnaire" class="quiz-action-card">
+                    <div class="qac-top">
+                        <div class="qac-icon">📋</div>
+                        <div class="qac-chips">
+                            <span class="qac-chip">~5 min</span>
+                            <span class="qac-chip">12 Qs</span>
+                        </div>
+                    </div>
+                    <div class="qac-title">Questionnaire</div>
+                    <div class="qac-desc">Adaptive questions covering memory, orientation, language &amp; attention to
+                        refine your result.</div>
+                    <div class="btn-quiz">
+                        Begin Survey <span class="btn-arrow">→</span>
+                    </div>
+                </a>
+
+            </div>
+
+        </main>
+    </div>
+
+
+
+
+    <script>
+        /* ─── Clock ─── */
+        function updateClock() {
+            document.getElementById('clock').textContent =
+                new Date().toLocaleTimeString('en-GB');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        /* ─── Ring circumference: r=30, C = 2π×30 ≈ 188.5 ─── */
+        const RING_C = 2 * Math.PI * 30;
+
+        /* ─── Ring helper ─── */
+        function setRing(progId, centerId, val, max) {
+            const prog = document.getElementById(progId);
+            const ctr = document.getElementById(centerId);
+            if (val === null || val === undefined) {
+                prog.style.strokeDashoffset = RING_C;
+                ctr.textContent = '–';
+                return;
+            }
+            const pct = Math.min(val / max, 1);
+            prog.style.strokeDashoffset = RING_C * (1 - pct);
+            ctr.textContent = Math.round(pct * 100) + '%';
+        }
+
+        /* ─── Animate score number ─── */
+        function animNum(el, val) {
+            if (!el) return;
+            el.classList.remove('score-anim');
+            void el.offsetWidth;
+            el.classList.add('score-anim');
+            el.textContent = val;
+        }
+
+        /* ─── Progress banner ─── */
+        function updateProgress(memDone, nbackDone, quizDone) {
+            const steps = [
+                { id: 'step-memory', done: memDone },
+                { id: 'step-nback', done: nbackDone },
+                { id: 'step-quiz', done: quizDone },
+            ];
+            let count = 0, firstPending = true;
+            steps.forEach(s => {
+                const el = document.getElementById(s.id);
+                if (s.done) {
+                    el.className = 'pb-step done';
+                    el.querySelector('.pb-step-num').textContent = '✓';
+                    count++;
+                } else if (firstPending) {
+                    el.className = 'pb-step active';
+                    firstPending = false;
+                } else {
+                    el.className = 'pb-step pending';
+                }
+            });
+            document.getElementById('stat-complete').textContent = count;
+        }
+
+        /* ─── Set questionnaire score card state ─── */
+        function updateQuizCard(quizData) {
+            const awaitingWrap = document.getElementById('quiz-awaiting-wrap');
+            const scoreWrap = document.getElementById('quiz-score-wrap');
+
+            if (!quizData || quizData.total === null || quizData.total === undefined) {
+                awaitingWrap.classList.remove('hidden');
+                scoreWrap.classList.remove('visible');
+                return;
+            }
+
+            awaitingWrap.classList.add('hidden');
+            scoreWrap.classList.add('visible');
+
+            /* Overall quiz score */
+            const qScoreEl = document.getElementById('quiz-score');
+            if (qScoreEl.textContent !== String(quizData.total))
+                animNum(qScoreEl, quizData.total);
+            setRing('rp-quiz', 'rc-quiz', quizData.total, 100);
+
+            /* Sub-scores breakdown bars */
+            const subs = [
+                { key: 'memory', barId: 'qb-memory', valId: 'qbv-memory', max: 100 },
+                { key: 'orientation', barId: 'qb-orient', valId: 'qbv-orient', max: 100 },
+                { key: 'language', barId: 'qb-lang', valId: 'qbv-lang', max: 100 },
+                { key: 'attention', barId: 'qb-attn', valId: 'qbv-attn', max: 100 },
+            ];
+            subs.forEach(s => {
+                const v = quizData[s.key];
+                const bar = document.getElementById(s.barId);
+                const val = document.getElementById(s.valId);
+                if (v !== null && v !== undefined) {
+                    bar.style.width = Math.min(v / s.max * 100, 100) + '%';
+                    val.textContent = v;
+                } else {
+                    bar.style.width = '0%';
+                    val.textContent = '–';
+                }
+            });
+
+            /* Mini summary in result card */
+            const rbQuiz = document.getElementById('rb-quiz');
+            if (rbQuiz) rbQuiz.textContent = quizData.total !== undefined ? quizData.total : '--';
+        }
+
+        /* ─── Main fetch ─── */
+        async function loadScores() {
+            try {
+                const res = await fetch('/get_data');
+                const data = await res.json();
+                const c = data.cognitive;
+
+                /* Score elements */
+                const memEl = document.getElementById('memory');
+                const nbEl = document.getElementById('nback');
+                const finEl = document.getElementById('final');
+
+                const mv = (c.memory != null) ? c.memory : '--';
+                const nv = (c.nback != null) ? c.nback : '--';
+                const fv = (c.ml_prediction != null) ? c.ml_prediction : '--';
+
+                if (memEl.textContent !== String(mv)) animNum(memEl, mv);
+                if (nbEl.textContent !== String(nv)) animNum(nbEl, nv);
+                if (finEl.textContent !== String(fv)) animNum(finEl, fv);
+
+                /* Mini summary */
+                const rbMem = document.getElementById('rb-memory');
+                const rbNb = document.getElementById('rb-nback');
+                if (rbMem) rbMem.textContent = mv;
+                if (rbNb) rbNb.textContent = nv;
+
+                /* Rings */
+                setRing('rp-memory', 'rc-memory', c.memory, 100);
+                setRing('rp-nback', 'rc-nback', c.nback, 100);
+
+                /* Questionnaire data — expects c.questionnaire = { total, memory, orientation, language, attention } */
+                updateQuizCard(c.questionnaire || null);
+
+                /* Risk pill + bar */
+                const rEl = document.getElementById('risk');
+                const bar = document.getElementById('risk-bar');
+                const pctEl = document.getElementById('risk-pct');
+
+                if (c.ml_prediction === 0) {
+                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--teal)"></div> Low Risk — Cognitive function appears normal';
+                    rEl.className = 'risk-pill rp-low';
+                    bar.style.width = '22%';
+                    bar.style.background = 'linear-gradient(90deg, var(--teal), var(--teal-light))';
+                    pctEl.textContent = '22%';
+                } else if (c.ml_prediction === 1) {
+                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--amber)"></div> Moderate Risk — Some areas may need attention';
+                    rEl.className = 'risk-pill rp-moderate';
+                    bar.style.width = '60%';
+                    bar.style.background = 'linear-gradient(90deg, var(--amber), #e8b050)';
+                    pctEl.textContent = '60%';
+                } else if (c.ml_prediction === 2) {
+                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--coral)"></div> High Risk — We recommend speaking to a clinician';
+                    rEl.className = 'risk-pill rp-high';
+                    bar.style.width = '90%';
+                    bar.style.background = 'linear-gradient(90deg, var(--coral), var(--coral-light))';
+                    pctEl.textContent = '90%';
+                } else {
+                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--text-light)"></div> Awaiting all assessments';
+                    rEl.className = 'risk-pill rp-waiting';
+                    bar.style.width = '0%';
+                    pctEl.textContent = '–';
+                }
+
+                /* Progress banner */
+                const quizDone = c.questionnaire && c.questionnaire.total != null;
+                updateProgress(c.memory != null, c.nback != null, quizDone);
+
+            } catch (e) {
+                // silently retry
+            }
+        }
+
+        setInterval(loadScores, 3000);
+        loadScores();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCare — N-Back Test</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="static/nback_style.css">
+
+</head>
+
+<body>
+
+    <!-- Confetti -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Feedback toast -->
+    <div class="feedback-toast" id="toast"></div>
+
+    <!-- ── HEADER ── -->
+    <header>
+        <a href="/" class="logo">
+            <div class="logo-mark">🧠</div>
+            <div>
+                <div class="logo-name">Mind<span>Care</span></div>
+            </div>
+        </a>
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+    </header>
+
+    <!-- ── GAME LAYOUT ── -->
+    <div class="game-wrap">
+
+        <!-- LEFT PANEL -->
+        <div class="panel-left">
+
+            <div class="game-title-block">
+                <div class="game-eyebrow">
+                    <div class="eyebrow-dot"></div>Working Memory Test
+                </div>
+                <h1 class="game-title">The <em>N-Back</em><br>Challenge</h1>
+                <p class="game-subtitle">Press MATCH when the current letter is the same as the one shown before it.
+                    Tests your working memory and concentration.</p>
+            </div>
+
+            <div class="stat-card sc-trial">
+                <div class="stat-icon si-plum">📋</div>
+                <div class="stat-body">
+                    <div class="stat-label">Trial Progress</div>
+                    <div class="stat-value sv-plum" id="stat-trial">0 / 30</div>
+                </div>
+            </div>
+            <div class="stat-card sc-hits">
+                <div class="stat-icon si-teal">✓</div>
+                <div class="stat-body">
+                    <div class="stat-label">Correct Hits</div>
+                    <div class="stat-value sv-teal" id="stat-hits">0</div>
+                </div>
+            </div>
+            <div class="stat-card sc-fa">
+                <div class="stat-icon si-coral">✗</div>
+                <div class="stat-body">
+                    <div class="stat-label">False Alarms</div>
+                    <div class="stat-value sv-coral" id="stat-fa">0</div>
+                </div>
+            </div>
+            <div class="stat-card sc-timer">
+                <div class="stat-icon si-amber">⏱</div>
+                <div class="stat-body">
+                    <div class="stat-label">Time Elapsed</div>
+                    <div class="stat-value sv-amber" id="stat-timer">0:00</div>
+                </div>
+            </div>
+
+            <div class="how-card">
+                <div class="how-title">How to Play</div>
+                <div class="how-row">
+                    <div class="how-num">1</div>
+                    <div class="how-text">A letter appears every 3 seconds</div>
+                </div>
+                <div class="how-row">
+                    <div class="how-num">2</div>
+                    <div class="how-text">Press <strong>MATCH</strong> if it matches the previous letter</div>
+                </div>
+                <div class="how-row">
+                    <div class="how-num">3</div>
+                    <div class="how-text">Don't press if the letters are different</div>
+                </div>
+                <div class="how-row">
+                    <div class="how-num">4</div>
+                    <div class="how-text">False alarms reduce your score</div>
+                </div>
+            </div>
+
+            <button class="btn-restart" onclick="initGame()">↺ Restart Test</button>
+
+        </div>
+
+        <!-- CENTER: GAME BOARD -->
+        <div class="board-wrap">
+            <div class="letter-stage">
+
+                <!-- Trial progress bar -->
+                <div class="trial-bar-wrap">
+                    <div class="trial-bar-header">
+                        <span class="trial-bar-label">Progress</span>
+                        <span class="trial-bar-count" id="bar-count">0 / 30</span>
+                    </div>
+                    <div class="trial-bar-track">
+                        <div class="trial-bar-fill" id="trial-bar-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Letter circle with countdown ring -->
+                <div class="letter-box-outer">
+                    <svg class="countdown-svg" width="180" height="180" viewBox="0 0 180 180">
+                        <circle class="cd-track" cx="90" cy="90" r="85" />
+                        <circle class="cd-fill" id="cd-fill" cx="90" cy="90" r="85" />
+                    </svg>
+                    <div class="letter-box idle" id="letter-box">?</div>
+                </div>
+
+                <!-- Previous letter row -->
+                <div class="prev-letter-row">
+                    <span class="prev-label">Previous</span>
+                    <span class="prev-letter-display" id="prev-display">–</span>
+                    <span class="prev-hint" id="prev-hint">Waiting for first letter…</span>
+                </div>
+
+                <!-- Match button -->
+                <div class="match-btn-wrap">
+                    <button class="btn-match" id="match-btn" onclick="handleMatch()" disabled>
+                        🎯 MATCH
+                        <div class="btn-match-sub">Press when letters repeat</div>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel-right">
+
+            <!-- Live score -->
+            <div class="score-preview">
+                <div class="sp-title">Live Score</div>
+                <div class="sp-score-big" id="live-score">–</div>
+                <div class="sp-score-label">/ 100 pts</div>
+                <div class="sp-bars">
+                    <div class="sp-bar-row">
+                        <span class="sp-bar-label">Hit Rate</span>
+                        <div class="sp-bar-track">
+                            <div class="sp-bar-fill spb-hit" id="bar-hit"></div>
+                        </div>
+                        <span class="sp-bar-val" id="val-hit">–</span>
+                    </div>
+                    <div class="sp-bar-row">
+                        <span class="sp-bar-label">False Alarms</span>
+                        <div class="sp-bar-track">
+                            <div class="sp-bar-fill spb-fa" id="bar-fa"></div>
+                        </div>
+                        <span class="sp-bar-val" id="val-fa">–</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History trail -->
+            <div class="history-card">
+                <div class="hc-title">Response History</div>
+                <div class="history-trail" id="history-trail"></div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot"
+                            style="background:var(--plum-pale);border:1px solid rgba(124,95,138,0.3)"></div>Target
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot"
+                            style="background:var(--teal-pale);border:1px solid rgba(61,158,140,0.3)"></div>Hit ✓
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot"
+                            style="background:var(--coral-pale);border:1px solid rgba(224,122,95,0.3)"></div>Miss ✗
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot"
+                            style="background:var(--amber-pale);border:1px solid rgba(212,148,58,0.3)"></div>False Alarm
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress ring -->
+            <div class="progress-block">
+                <div class="progress-ring-wrap">
+                    <svg class="pr-svg" width="64" height="64" viewBox="0 0 64 64">
+                        <circle class="pr-track" cx="32" cy="32" r="26" />
+                        <circle class="pr-fill" id="pr-fill" cx="32" cy="32" r="26" />
+                    </svg>
+                    <div class="pr-label" id="pr-label">0%</div>
+                </div>
+                <div class="progress-text">
+                    <div class="pt-title" id="pt-title">Ready to Start</div>
+                    <div class="pt-sub" id="pt-sub">Test begins automatically</div>
+                </div>
+            </div>
+
+            <!-- Tip -->
+            <div class="tip-card">
+                <div class="tip-label">💡 Focus Tip</div>
+                <div class="tip-text" id="tip-text">Say each letter out loud in your head as it appears — verbalising
+                    helps working memory retention.</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ── RESULT OVERLAY ── -->
+    <div class="overlay" id="overlay">
+        <div class="result-modal">
+            <div class="rm-emoji" id="rm-emoji">🎉</div>
+            <div class="rm-title">Test Complete!</div>
+            <div class="rm-sub" id="rm-sub">Your working memory result is ready.</div>
+            <div class="rm-score-big" id="rm-score">--</div>
+            <div class="rm-score-label">N-Back Score</div>
+            <div class="rm-stats">
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-plum" id="rm-targets">0</div>
+                    <div class="rm-stat-lbl">Targets</div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-teal" id="rm-hits">0</div>
+                    <div class="rm-stat-lbl">Hits</div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-coral" id="rm-fa">0</div>
+                    <div class="rm-stat-lbl">False Alarms</div>
+                </div>
+                <div class="rm-stat">
+                    <div class="rm-stat-val rv-amber" id="rm-time">0:00</div>
+                    <div class="rm-stat-lbl">Time</div>
+                </div>
+            </div>
+            <div class="rm-btns">
+                <button class="rm-btn-primary" onclick="closeAndRestart()">↺ Try Again</button>
+                <a href="/" class="rm-btn-secondary">→ Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════
+           CONFIG
+        ══════════════════════════════════════════ */
+        const LETTERS = 'ABCDEFGH';
+        const TOTAL_TRIALS = 30;
+        const INTERVAL_MS = 3000;
+        const CIRC_CD = 2 * Math.PI * 85;  // countdown ring
+        const CIRC_PR = 2 * Math.PI * 26;  // progress ring
+
+        const TIPS = [
+            "Say each letter aloud in your head — verbalising helps working memory.",
+            "Keep your eyes fixed on the centre of the circle for faster reaction.",
+            "Don't panic on misses — stay calm and focused on the next letter.",
+            "Try to hold the previous letter clearly in your mind before the next appears.",
+            "Regular deep breaths between letters can improve focus and reaction time.",
+        ];
+
+        /* ══════════════════════════════════════════
+           STATE
+        ══════════════════════════════════════════ */
+        let prev = null;
+        let curr = null;
+        let trial = 0;
+        let hits = 0;
+        let falseAlarms = 0;
+        let misses = 0;
+        let actualTargets = 0;
+        let responded = false;
+        let gameOver = false;
+        let gameStarted = false;
+
+        let startTime = null;
+        let timerInterval = null;
+        let gameInterval = null;
+        let countdownAnim = null;
+        let cdStart = null;
+
+        // Reaction time tracking
+        let letterShownAt = null;       // performance.now() when letter appeared
+        let reactionTimes = [];         // array of ms for each correct hit
+
+        /* ══════════════════════════════════════════
+           INIT
+        ══════════════════════════════════════════ */
+        function initGame() {
+            // Clear timers
+            clearInterval(timerInterval);
+            clearInterval(gameInterval);
+            cancelAnimationFrame(countdownAnim);
+
+            // Reset state
+            prev = null; curr = null; trial = 0;
+            hits = 0; falseAlarms = 0; misses = 0; actualTargets = 0;
+            responded = false; gameOver = false; gameStarted = false;
+            startTime = null;
+            letterShownAt = null; reactionTimes = [];
+
+            // Reset UI
+            document.getElementById('stat-trial').textContent = `0 / ${TOTAL_TRIALS}`;
+            document.getElementById('stat-hits').textContent = '0';
+            document.getElementById('stat-fa').textContent = '0';
+            document.getElementById('stat-timer').textContent = '0:00';
+            document.getElementById('bar-count').textContent = `0 / ${TOTAL_TRIALS}`;
+            document.getElementById('trial-bar-fill').style.width = '0%';
+            document.getElementById('live-score').textContent = '–';
+            document.getElementById('bar-hit').style.width = '0%';
+            document.getElementById('bar-fa').style.width = '0%';
+            document.getElementById('val-hit').textContent = '–';
+            document.getElementById('val-fa').textContent = '–';
+            document.getElementById('history-trail').innerHTML = '';
+            document.getElementById('pr-fill').style.strokeDashoffset = CIRC_PR;
+            document.getElementById('pr-label').textContent = '0%';
+            document.getElementById('pt-title').textContent = 'Ready to Start';
+            document.getElementById('pt-sub').textContent = 'First letter arriving soon…';
+            document.getElementById('prev-display').textContent = '–';
+            document.getElementById('prev-hint').textContent = 'Waiting for first letter…';
+            document.getElementById('tip-text').textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+
+            const box = document.getElementById('letter-box');
+            box.textContent = '?';
+            box.className = 'letter-box idle';
+            document.getElementById('cd-fill').style.strokeDashoffset = 0;
+            document.getElementById('cd-fill').style.stroke = 'var(--plum)';
+
+            const btn = document.getElementById('match-btn');
+            btn.disabled = false;
+
+            document.getElementById('overlay').classList.remove('visible');
+
+            // Start
+            setTimeout(() => {
+                showLetter();
+                gameInterval = setInterval(onTick, INTERVAL_MS);
+                timerInterval = setInterval(updateTimer, 500);
+            }, 800);
+        }
+
+        /* ══════════════════════════════════════════
+           TICK — called every INTERVAL_MS
+        ══════════════════════════════════════════ */
+        function onTick() {
+            if (gameOver) return;
+
+            // Score miss if was a target and no response
+            if (prev !== null && curr !== null && prev === curr && !responded) {
+                misses++;
+                addHistoryToken(curr, 'miss');
+                updateLiveScore();
+            } else if (curr !== null && !responded) {
+                // Normal no-response (correct rejection — no token needed)
+            }
+
+            showLetter();
+        }
+
+        function showLetter() {
+            if (trial >= TOTAL_TRIALS) { endGame(); return; }
+
+            responded = false;
+            const prevLetter = curr;
+            const c = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+
+            prev = prevLetter;
+            curr = c;
+            trial++;
+            gameStarted = true;
+
+            if (!startTime) startTime = Date.now();
+
+            if (prev && prev === curr) actualTargets++;
+
+            // Update letter box
+            const box = document.getElementById('letter-box');
+            box.textContent = c;
+            box.className = 'letter-box new-letter';
+            letterShownAt = performance.now(); // record when letter appeared
+            setTimeout(() => box.classList.remove('new-letter'), 350);
+
+            // Update previous indicator
+            document.getElementById('prev-display').textContent = prev || '–';
+            document.getElementById('prev-hint').textContent = prev
+                ? (prev === curr ? '⚡ Same letter! Press MATCH' : 'Different — don\'t press')
+                : 'No previous letter yet';
+
+            // Update trial progress
+            document.getElementById('stat-trial').textContent = `${trial} / ${TOTAL_TRIALS}`;
+            document.getElementById('bar-count').textContent = `${trial} / ${TOTAL_TRIALS}`;
+            document.getElementById('trial-bar-fill').style.width = (trial / TOTAL_TRIALS * 100) + '%';
+
+            // Update progress ring
+            const pct = trial / TOTAL_TRIALS;
+            document.getElementById('pr-fill').style.strokeDashoffset = CIRC_PR * (1 - pct);
+            document.getElementById('pr-label').textContent = Math.round(pct * 100) + '%';
+
+            // Progress messages
+            const msgs = [
+                ['Starting…', 'First letter — no match possible yet'],
+                ['Warming Up', 'Stay focused on each letter'],
+                ['Getting Started', 'Hold the previous letter in mind'],
+                ['Good Concentration', 'Keep your working memory active'],
+                ['Halfway There', 'Excellent focus so far'],
+                ['Strong Focus', 'Your working memory is being tested'],
+                ['Almost Done!', 'Last few letters — stay sharp'],
+                ['Complete!', 'Excellent concentration!'],
+            ];
+            const mi = Math.min(Math.round(pct * (msgs.length - 1)), msgs.length - 1);
+            document.getElementById('pt-title').textContent = msgs[mi][0];
+            document.getElementById('pt-sub').textContent = msgs[mi][1];
+
+            // Countdown ring animation
+            startCountdown();
+
+            // Enable/disable match button
+            document.getElementById('match-btn').disabled = (trial === 1); // no previous on first
+        }
+
+        /* ══════════════════════════════════════════
+           COUNTDOWN RING
+        ══════════════════════════════════════════ */
+        function startCountdown() {
+            cancelAnimationFrame(countdownAnim);
+            cdStart = performance.now();
+            const fill = document.getElementById('cd-fill');
+
+            function step(now) {
+                const elapsed = now - cdStart;
+                const frac = Math.min(elapsed / INTERVAL_MS, 1);
+                fill.style.strokeDashoffset = CIRC_CD * frac;
+
+                // Colour shifts as time runs out
+                if (frac < 0.5) fill.style.stroke = 'var(--plum)';
+                else if (frac < 0.8) fill.style.stroke = 'var(--amber)';
+                else fill.style.stroke = 'var(--coral)';
+
+                if (frac < 1) countdownAnim = requestAnimationFrame(step);
+            }
+            countdownAnim = requestAnimationFrame(step);
+        }
+
+        /* ══════════════════════════════════════════
+           MATCH BUTTON
+        ══════════════════════════════════════════ */
+        function handleMatch() {
+            if (gameOver || !gameStarted) return;
+            responded = true;
+
+            const btn = document.getElementById('match-btn');
+            btn.classList.add('pressed');
+            setTimeout(() => btn.classList.remove('pressed'), 200);
+
+            const isTarget = prev && prev === curr;
+            const box = document.getElementById('letter-box');
+
+            if (isTarget) {
+                hits++;
+                if (letterShownAt) reactionTimes.push(performance.now() - letterShownAt);
+                document.getElementById('stat-hits').textContent = hits;
+                box.className = 'letter-box flash-match';
+                addHistoryToken(curr, 'hit');
+                showToast('✓ Correct Match!', 'hit');
+            } else {
+                falseAlarms++;
+                document.getElementById('stat-fa').textContent = falseAlarms;
+                box.className = 'letter-box flash-wrong';
+                addHistoryToken(curr, 'false-alarm');
+                showToast('✗ False Alarm', 'fa');
+            }
+
+            updateLiveScore();
+            setTimeout(() => { if (!gameOver) box.className = 'letter-box'; }, 500);
+        }
+
+        /* ══════════════════════════════════════════
+           HISTORY TOKEN
+        ══════════════════════════════════════════ */
+        function addHistoryToken(letter, type) {
+            const trail = document.getElementById('history-trail');
+            const tok = document.createElement('div');
+            tok.className = `ht-token ${type}`;
+            tok.textContent = letter;
+            trail.appendChild(tok);
+            // Animate in
+            tok.style.transform = 'scale(0)';
+            requestAnimationFrame(() => { tok.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)'; tok.style.transform = 'scale(1)'; });
+            trail.scrollLeft = trail.scrollWidth;
+        }
+
+        /* ══════════════════════════════════════════
+           TOAST
+        ══════════════════════════════════════════ */
+        let toastTimeout;
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `feedback-toast toast-${type} show`;
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => t.classList.remove('show'), 1400);
+        }
+
+        /* ══════════════════════════════════════════
+           TIMER
+        ══════════════════════════════════════════ */
+        function updateTimer() {
+            if (!startTime) return;
+            const s = Math.floor((Date.now() - startTime) / 1000);
+            const m = Math.floor(s / 60), sec = s % 60;
+            document.getElementById('stat-timer').textContent = `${m}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function getTimeStr() {
+            if (!startTime) return '0:00';
+            const s = Math.floor((Date.now() - startTime) / 1000);
+            const m = Math.floor(s / 60), sec = s % 60;
+            return `${m}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        /* ══════════════════════════════════════════
+           LIVE SCORE
+        ══════════════════════════════════════════ */
+        function calcScore() {
+            const hitRate = actualTargets > 0 ? (hits / actualTargets) * 100 : 0;
+            const faPct = falseAlarms / Math.max(trial - actualTargets, 1) * 100;
+            const penalty = falseAlarms * 6;
+            let score = hitRate - penalty;
+            score = Math.max(0, Math.min(100, score));
+            return { score: Math.round(score * 10) / 10, hitRate: Math.round(hitRate), faPct: Math.round(faPct) };
+        }
+
+        function updateLiveScore() {
+            if (!gameStarted) return;
+            const s = calcScore();
+            document.getElementById('live-score').textContent = s.score;
+            document.getElementById('bar-hit').style.width = s.hitRate + '%';
+            document.getElementById('bar-fa').style.width = Math.min(s.faPct, 100) + '%';
+            document.getElementById('val-hit').textContent = s.hitRate + '%';
+            document.getElementById('val-fa').textContent = falseAlarms;
+        }
+
+        /* ══════════════════════════════════════════
+           END GAME
+        ══════════════════════════════════════════ */
+        function endGame() {
+            if (gameOver) return;
+            gameOver = true;
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            cancelAnimationFrame(countdownAnim);
+
+            document.getElementById('match-btn').disabled = true;
+            const box = document.getElementById('letter-box');
+            box.textContent = '✓';
+            box.className = 'letter-box flash-match';
+
+            const s = calcScore();
+            const finalScore = Number(s.score.toFixed(2));
+            const timeStr = getTimeStr();
+
+            // Result messages
+            let emoji = '🎯', msg = 'Good working memory performance.';
+            if (finalScore >= 80) { emoji = '🌟'; msg = 'Exceptional! Outstanding working memory.'; }
+            else if (finalScore >= 60) { emoji = '🎯'; msg = 'Well done! Good concentration and recall.'; }
+            else if (finalScore >= 40) { emoji = '🙂'; msg = 'Not bad — practise can sharpen your working memory.'; }
+            else { emoji = '💪'; msg = 'Keep practising. Working memory improves with training!'; }
+
+            setTimeout(() => {
+                document.getElementById('rm-emoji').textContent = emoji;
+                document.getElementById('rm-sub').textContent = msg;
+                document.getElementById('rm-score').textContent = finalScore;
+                document.getElementById('rm-targets').textContent = actualTargets;
+                document.getElementById('rm-hits').textContent = hits;
+                document.getElementById('rm-fa').textContent = falseAlarms;
+                document.getElementById('rm-time').textContent = timeStr;
+                document.getElementById('overlay').classList.add('visible');
+                if (finalScore >= 50) launchConfetti();
+            }, 600);
+
+            // Compute avg reaction time (default 700ms if no hits)
+            const avgRT = reactionTimes.length > 0
+                ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+                : 700;
+
+            // Save nback score + reaction_time_ms to Firebase immediately
+            if (window.saveScoresToFirebase) {
+                window.saveScoresToFirebase({
+                    nback: finalScore,
+                    'mlParams.reaction_time_ms': avgRT
+                });
+            }
+
+            // Also tell the backend (for server-side ML prediction)
+            fetch('/update_scores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nback_score: finalScore, reaction_time_ms: avgRT })
+            }).then(v => v.json()).then(res => {
+                if (res.mlPrediction !== undefined && window.saveScoresToFirebase) {
+                    window.saveScoresToFirebase({ mlPrediction: res.mlPrediction });
+                }
+            }).catch(err => console.warn('[N-Back] Backend score update failed:', err));
+        }
+
+        function closeAndRestart() {
+            document.getElementById('overlay').classList.remove('visible');
+            setTimeout(initGame, 300);
+        }
+
+        /* ══════════════════════════════════════════
+           CONFETTI
+        ══════════════════════════════════════════ */
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = innerWidth; canvas.height = innerHeight;
+            const colors = ['#7c5f8a', '#a07bb0', '#3d9e8c', '#d4943a', '#e07a5f', '#7a9e87'];
+            const pieces = Array.from({ length: 100 }, () => ({
+                x: Math.random() * canvas.width, y: -10 - Math.random() * 180,
+                w: 7 + Math.random() * 7, h: 3 + Math.random() * 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vx: (Math.random() - 0.5) * 3, vy: 2.5 + Math.random() * 3.5,
+                rot: Math.random() * 360, rSpeed: (Math.random() - 0.5) * 6, opacity: 1,
+            }));
+            let frame = 0;
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+                pieces.forEach(p => {
+                    if (p.y > canvas.height + 20) return;
+                    alive = true;
+                    p.x += p.vx; p.y += p.vy; p.rot += p.rSpeed;
+                    if (p.y > canvas.height * 0.7) p.opacity -= 0.016;
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.opacity);
+                    ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                frame++;
+                if (alive && frame < 280) requestAnimationFrame(draw);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            draw();
+        }
+
+        /* ── Keyboard shortcut: Space = MATCH ── */
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Space' && !document.getElementById('match-btn').disabled) {
+                e.preventDefault();
+                handleMatch();
+            }
+        });
+
+        /* Start */
+        initGame();
+    </script>
+
+    <!-- Firebase: inline module — saves nback score + reaction time as ML param -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        const _fbApp = initializeApp({
+            apiKey: "AIzaSyDv7BgLJM-xiwv1AWQJGrADRZnemWGgiUI",
+            authDomain: "dementia-screening.firebaseapp.com",
+            projectId: "dementia-screening",
+            storageBucket: "dementia-screening.firebasestorage.app",
+            messagingSenderId: "948621756070",
+            appId: "1:948621756070:web:dc2a7bcc43c1c3557a1667"
+        }, "nback-app");
+        const _db = getFirestore(_fbApp);
+        window.saveScoresToFirebase = async function (scoreData) {
+            const uid = sessionStorage.getItem('nb_uid');
+            if (!uid) { console.warn('[Firebase] No user logged in.'); return; }
+            try {
+                const u = {};
+                if (scoreData.nback !== undefined) u['scores.nback'] = scoreData.nback;
+                if (scoreData.mlPrediction !== undefined) u['scores.mlPrediction'] = scoreData.mlPrediction;
+                if (scoreData.mlRiskLevel !== undefined) u['scores.mlRiskLevel'] = scoreData.mlRiskLevel;
+                // ML software parameter: reaction time from N-Back
+                if (scoreData['mlParams.reaction_time_ms'] !== undefined)
+                    u['mlParams.reaction_time_ms'] = scoreData['mlParams.reaction_time_ms'];
+                u['scores.lastUpdated'] = serverTimestamp();
+                u['mlParams.lastUpdated'] = serverTimestamp();
+                await updateDoc(doc(_db, 'users', uid), u);
+                console.log('[Firebase] N-Back scores + mlParams saved:', u);
+            } catch (err) { console.error('[Firebase] Save error:', err.message); }
+        };
+    </script>
+</body>
+
+</html>
