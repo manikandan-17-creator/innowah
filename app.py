@@ -298,6 +298,11 @@ def save_session_scores(scores):
 # ── INNOWAH hardware session store (device_id → list of ESP32 readings) ───────
 hardware_sessions = {}   # { "ESP32_INNOWAH_001": [ {...}, {...} ] }
 
+# ── Device connection notification flags (server-side, NOT session-based) ──────
+# ESP32 and browser use different HTTP sessions, so we track connection events in RAM.
+# Format: { "ESP32_INNOWAH_001": { "first_seen": datetime, "notified": False } }
+device_connection_flags = {}
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # INNOWAH FEATURE EXTRACTOR
@@ -712,11 +717,35 @@ def get_data():
             except Exception as e:
                 logger.warning(f"[Dashboard] Auto-prediction in get_data failed: {e}")
 
+    # Check if a device recently connected (one-time notification flag)
+    # Uses server-side RAM dict instead of Flask session (ESP32 has a different session)
+    just_connected = False
+    just_connected_device = None
+    if device_id and device_id in device_connection_flags:
+        flag = device_connection_flags[device_id]
+        if not flag.get("notified"):
+            just_connected = True
+            just_connected_device = device_id
+            device_connection_flags[device_id]["notified"] = True
+    elif not device_id:
+        # Check ALL devices for any un-notified connection
+        for did, flag in device_connection_flags.items():
+            if not flag.get("notified"):
+                just_connected = True
+                just_connected_device = did
+                device_connection_flags[did]["notified"] = True
+                # Also set device_id so dashboard can use it
+                if did in hardware_sessions and hardware_sessions[did]:
+                    latest_hw = hardware_sessions[did][-1]["hardware"]
+                    device_id = did
+                break
+
     return jsonify({
         "cognitive": scores,
         "software_features": sw_features,
         "hardware_data": latest_hw,
-        "hardware_device_id": device_id if latest_hw else None
+        "hardware_device_id": device_id if latest_hw else None,
+        "just_connected": just_connected
     })
 
 
@@ -889,6 +918,16 @@ def receive_hardware_data():
     # We merge incoming data with the previous reading to prevent parameters from "vanishing"
     # when different devices (wristwatch vs headband) send their specific sensor blocks.
     last_readings = hardware_sessions.get(device_id, [])
+    
+    # Flag to notify frontend if this is a fresh connection
+    # NOTE: We use a server-side dict, NOT Flask session, because ESP32 and browser
+    # are different HTTP clients with different session cookies.
+    if not last_readings and device_id not in device_connection_flags:
+        device_connection_flags[device_id] = {
+            "first_seen": datetime.utcnow().isoformat(),
+            "notified": False
+        }
+    
     latest_hw = {}
     if last_readings:
         # Deep copy the latest hardware state to avoid modifying previous readings in history
@@ -915,9 +954,9 @@ def receive_hardware_data():
         hardware_sessions[device_id] = []
     hardware_sessions[device_id].append(reading)
 
-    # Keep last 6 readings (~1 minute of history)
-    if len(hardware_sessions[device_id]) > 6:
-        hardware_sessions[device_id] = hardware_sessions[device_id][-6:]
+    # Keep last 30 readings (~5 minutes of history at 10s intervals)
+    if len(hardware_sessions[device_id]) > 30:
+        hardware_sessions[device_id] = hardware_sessions[device_id][-30:]
 
     logger.info(
         f"[ESP32] device={device_id} — "
@@ -985,6 +1024,214 @@ def receive_hardware_data():
         "ml_triggered":    ml_triggered,
         "prediction":      prediction_result
     }), 200
+
+import pandas as pd
+from flask import send_file
+
+@app.route("/api/export_data", methods=["GET"])
+def export_data():
+    """Export the current 5-minute hardware history + latest software features to Excel."""
+    device_id = request.args.get("device_id")
+    if not device_id or device_id not in hardware_sessions:
+        return jsonify({"status": "error", "message": "No data found for this device"}), 404
+
+    readings = hardware_sessions[device_id]
+
+    # ── 1. Get software features (try Flask session, then Firestore) ──────
+    sw_features = session.get("software_features") or {}
+
+    # If session doesn't have software features, try Firestore
+    if not sw_features:
+        uid = session.get("user_uid") or ""
+        if not uid:
+            uid_found = find_user_by_device_id(device_id)
+            if uid_found:
+                uid = uid_found
+        if uid:
+            try:
+                params = get_user_params_from_firestore(uid)
+                if params and params.get("sw_params"):
+                    sw_features = params["sw_params"]
+                    logger.info(f"[Export] Loaded software features from Firestore for uid={uid}")
+            except Exception as e:
+                logger.warning(f"[Export] Could not load sw_params from Firestore: {e}")
+
+    # ── 2. Build hardware readings DataFrame ─────────────────────────────
+    hw_rows = []
+    for r in readings:
+        hw = r.get("hardware") or {}
+        timestamp = r.get("timestamp", "")
+        imu = hw.get("imu") or {}
+        ppg = hw.get("ppg") or {}
+        eeg = hw.get("eeg") or {}
+        temp = hw.get("temperature") or {}
+
+        row = {
+            "Timestamp": timestamp,
+            "Gait Speed (m/s)": imu.get("gait_speed"),
+            "Stride Variability": imu.get("stride_variability"),
+            "Turning Velocity": imu.get("turning_velocity"),
+            "Postural Sway": imu.get("postural_sway"),
+            "Step Count": imu.get("step_count"),
+            "Heart Rate (bpm)": ppg.get("heart_rate"),
+            "SpO2 (%)": ppg.get("spo2"),
+            "RMSSD": ppg.get("rmssd"),
+            "SDNN": ppg.get("sdnn"),
+            "LF/HF Ratio": ppg.get("lf_hf_ratio"),
+            "Desat Events": ppg.get("desat_events"),
+            "Alpha Power": eeg.get("alpha_power"),
+            "Theta Power": eeg.get("theta_power"),
+            "Delta Power": eeg.get("delta_power"),
+            "Theta/Alpha Ratio": eeg.get("theta_alpha_ratio"),
+            "Dominant Frequency": eeg.get("dominant_frequency"),
+            "Skin Temp (°C)": temp.get("skin_temp"),
+            "Ambient Temp (°C)": temp.get("ambient_temp"),
+        }
+        hw_rows.append(row)
+
+    df_hw = pd.DataFrame(hw_rows)
+
+    # ── 3. Build software features DataFrame ─────────────────────────────
+    # reaction_time_ms and error_consistency_norm come from the N-Back game
+    # and are stored in cognitive_scores (via /update_scores), NOT in software_features.
+    # We must merge both sources so nothing is missing.
+    scores_sw_merge = get_session_scores()  # already fetched below but needed here too
+    rt_val  = (sw_features.get("reaction_time_ms")      if sw_features else None) \
+               or scores_sw_merge.get("reaction_time_ms")
+    ec_val  = (sw_features.get("error_consistency_norm") if sw_features else None) \
+               or scores_sw_merge.get("error_consistency_norm")
+
+    if sw_features and isinstance(sw_features, dict):
+        sw_row = {
+            "Immediate Recall":       sw_features.get("immediate_recall"),
+            "Delayed Recall":         sw_features.get("delayed_recall"),
+            "Cue Benefit Index":      sw_features.get("cue_benefit_index"),
+            "Retention Ratio":        sw_features.get("retention_ratio"),
+            "Orientation Score":      sw_features.get("orientation_score"),
+            "Serial 7s Score":        sw_features.get("serial7s_score"),
+            "Clock Drawing Score":    sw_features.get("clock_drawing_score"),
+            "Reaction Time (ms)":     rt_val,   # from N-Back game (cognitive_scores)
+            "Error Consistency":      ec_val,   # from N-Back game (cognitive_scores)
+            "Naming Task Score":      sw_features.get("naming_task_score"),
+            "Sentence Repetition":    sw_features.get("sentence_repetition_score"),
+            "Verbal Fluency (WPM)":   sw_features.get("verbal_fluency_wpm"),
+            "IADL Impairment Count":  sw_features.get("iadl_impairment_count"),
+            "Mood Filter":            sw_features.get("mood_filter"),
+        }
+        df_sw = pd.DataFrame([sw_row]) if any(v is not None for v in sw_row.values()) else pd.DataFrame()
+    elif rt_val is not None or ec_val is not None:
+        # sw_features not available but game scores exist — still export what we have
+        sw_row = {
+            "Reaction Time (ms)": rt_val,
+            "Error Consistency":  ec_val,
+        }
+        df_sw = pd.DataFrame([sw_row])
+    else:
+        df_sw = pd.DataFrame()
+
+    # ── 4. Build prediction + game scores DataFrame ──────────────────────
+    scores = get_session_scores()
+    clinical = scores.get("clinical_result") or {}
+    questionnaire = scores.get("questionnaire") or {}
+
+    pred_row = {
+        "Risk Score": clinical.get("score") if isinstance(clinical, dict) else None,
+        "Risk Level": clinical.get("label") if isinstance(clinical, dict) else None,
+        "Recommendation": clinical.get("recommendation") if isinstance(clinical, dict) else None,
+        "Memory Game Score": scores.get("memory"),
+        "N-Back Game Score": scores.get("nback"),
+        "Questionnaire Total": questionnaire.get("total") if isinstance(questionnaire, dict) else None,
+        "Questionnaire Memory": questionnaire.get("memory") if isinstance(questionnaire, dict) else None,
+        "Questionnaire Orientation": questionnaire.get("orientation") if isinstance(questionnaire, dict) else None,
+        "Questionnaire Language": questionnaire.get("language") if isinstance(questionnaire, dict) else None,
+        "Questionnaire Attention": questionnaire.get("attention") if isinstance(questionnaire, dict) else None,
+    }
+    df_pred = pd.DataFrame([pred_row]) if any(v is not None for v in pred_row.values()) else pd.DataFrame()
+
+    # ── 5. Write Excel file ──────────────────────────────────────────────
+    import tempfile
+
+    temp_dir = tempfile.gettempdir()
+    output_path = os.path.join(temp_dir, f"neuroband_report_{device_id}.xlsx")
+
+    with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+        df_hw.to_excel(writer, sheet_name='Hardware_Sensor_Data', index=False)
+        if not df_sw.empty:
+            df_sw.to_excel(writer, sheet_name='Software_Cognitive_Data', index=False)
+        if not df_pred.empty:
+            df_pred.to_excel(writer, sheet_name='Assessment_Results', index=False)
+
+    logger.info(f"[Export] Excel report generated for device={device_id} "
+                f"(hw_rows={len(hw_rows)}, sw={'yes' if not df_sw.empty else 'no'}, pred={'yes' if not df_pred.empty else 'no'})")
+
+    return send_file(output_path, as_attachment=True, download_name=f"Assessment_Report_{device_id}.xlsx")
+
+
+@app.route("/api/hardware_history", methods=["GET"])
+def hardware_history():
+    """Return the full 5-minute hardware reading history for the data collection timer."""
+    device_id = request.args.get("device_id", "")
+
+    # If no device_id given, find any active device
+    if not device_id:
+        for did, readings in hardware_sessions.items():
+            if readings:
+                device_id = did
+                break
+
+    if not device_id or device_id not in hardware_sessions:
+        return jsonify({"status": "ok", "device_id": None, "readings": [], "count": 0, "max_readings": 30})
+
+    readings = hardware_sessions[device_id]
+    first_seen = device_connection_flags.get(device_id, {}).get("first_seen")
+
+    return jsonify({
+        "status": "ok",
+        "device_id": device_id,
+        "count": len(readings),
+        "max_readings": 30,
+        "first_seen": first_seen,
+        "collection_interval_sec": 10,
+        "collection_duration_sec": 300,
+        "timestamps": [r["timestamp"] for r in readings]
+    })
+
+
+@app.route("/api/reset_hardware", methods=["POST"])
+def reset_hardware():
+    """Reset hardware data collection for a device so it can start fresh."""
+    data = request.get_json(force=True) if request.is_json else {}
+    device_id = data.get("device_id", "")
+
+    # If no device_id given, find any active device
+    if not device_id:
+        for did in list(hardware_sessions.keys()):
+            device_id = did
+            break
+
+    if not device_id:
+        return jsonify({"status": "error", "message": "No device to reset"}), 404
+
+    # Clear hardware readings
+    if device_id in hardware_sessions:
+        old_count = len(hardware_sessions[device_id])
+        hardware_sessions[device_id] = []
+        logger.info(f"[Reset] Cleared {old_count} readings for device={device_id}")
+
+    # Clear connection flag so a new "Device Connected" notification fires
+    if device_id in device_connection_flags:
+        del device_connection_flags[device_id]
+
+    # Clear hardware_used flag in session so dashboard re-evaluates
+    scores = get_session_scores()
+    scores["hardware_used"] = False
+    save_session_scores(scores)
+
+    return jsonify({
+        "status": "ok",
+        "message": f"Hardware data reset for {device_id}. New readings will be collected.",
+        "device_id": device_id
+    })
 
 
 @app.route("/api/software_data", methods=["POST"])

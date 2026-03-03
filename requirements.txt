@@ -8,4 +8,4 @@ waitress
 opencv-python-headless
 requests
 firebase-admin
-
+openpyxl

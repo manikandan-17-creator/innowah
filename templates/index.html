@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeuroMind+ — Dementia Screening</title>
     <link rel="stylesheet" href="static/index_style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -28,6 +29,9 @@
                     <span>Live Session</span>
                 </div>
                 <div class="header-time" id="clock">--:--:--</div>
+                <button id="download-btn" class="header-auth-btn"
+                    style="background: var(--plum); display: none; margin-right: 10px; cursor: pointer; border: none;">📥
+                    Download Report</button>
                 <a href="/signup" id="header-auth-btn" class="header-auth-btn">Log In</a>
             </div>
         </header>
@@ -324,6 +328,42 @@
                     </div>
                 </div>
                 <div class="hw-device-info" id="hw-device-info">Device: Not connected</div>
+            </div>
+
+            <!-- ── SECTION: Data Collection Timer ── -->
+            <div class="data-collection-card" id="data-collection-card" style="display:none;">
+                <div class="dc-header">
+                    <div class="dc-title">
+                        <span class="dc-icon">⏱️</span>
+                        <span>Data Collection Progress</span>
+                    </div>
+                    <div class="dc-timer-pill" id="dc-timer-pill">
+                        <span id="dc-timer-text">5:00 remaining</span>
+                    </div>
+                </div>
+                <div class="dc-progress-area">
+                    <div class="dc-info-row">
+                        <span class="dc-info-label">Readings collected:</span>
+                        <span class="dc-info-value" id="dc-readings-count">0 / 30</span>
+                    </div>
+                    <div class="dc-info-row">
+                        <span class="dc-info-label">Interval:</span>
+                        <span class="dc-info-value">Every 10 seconds</span>
+                    </div>
+                    <div class="dc-info-row">
+                        <span class="dc-info-label">Duration:</span>
+                        <span class="dc-info-value">5 minutes total</span>
+                    </div>
+                    <div class="dc-bar-track">
+                        <div class="dc-bar-fill" id="dc-bar-fill"></div>
+                    </div>
+                    <div class="dc-status" id="dc-status">Collecting sensor data…</div>
+                    <div class="dc-actions">
+                        <button class="dc-reset-btn" id="dc-reset-btn" title="Reset and start collection again">
+                            🔄 Reset Collection
+                        </button>
+                    </div>
+                </div>
             </div>
 
 
@@ -910,8 +950,34 @@
                 const quizDone = c.questionnaire && c.questionnaire.total != null;
                 updateProgress(c.memory != null, c.nback != null, quizDone);
 
-                /* ─── Update Hardware Monitor ─── */
+                /* ─── Update Hardware Monitor (MUST be declared before use) ─── */
                 const hw = data.hardware_data;
+
+                /* ─── Connection Notification & Download Button ─── */
+                if (data.just_connected) {
+                    Swal.fire({
+                        title: '🔗 Device Connected!',
+                        html: `<div style="text-align:center;">
+                            <div style="font-size:48px; margin-bottom:12px;">📡</div>
+                            <p style="font-size:16px; color:#ccc;">Successfully linked with <strong style="color:#3d9e8c;">${data.hardware_device_id}</strong></p>
+                            <p style="font-size:14px; color:#999; margin-top:8px;">5-minute data collection window is now active.<br>Sensor readings every 10 seconds.</p>
+                        </div>`,
+                        icon: 'success',
+                        background: '#1a1a2e',
+                        color: '#e0e0e0',
+                        confirmButtonColor: '#3d9e8c',
+                        confirmButtonText: 'Got it!',
+                        showClass: { popup: 'swal2-show', backdrop: 'swal2-backdrop-show' },
+                        customClass: { popup: 'swal-neuroband' }
+                    });
+                }
+
+                const dlBtn = document.getElementById('download-btn');
+                if (hw) {
+                    dlBtn.style.display = 'inline-flex';
+                } else {
+                    dlBtn.style.display = 'none';
+                }
                 if (hw) {
                     const ppg = hw.ppg || {};
                     const eeg = hw.eeg || {};
@@ -1046,6 +1112,174 @@
 
         setInterval(loadScores, 3000);
         loadScores();
+
+        /* ─── Data Collection Timer ─── */
+        let collectionStartTime = null;
+        let collectionComplete = false;
+
+        function updateDataCollectionTimer() {
+            const card = document.getElementById('data-collection-card');
+            const timerText = document.getElementById('dc-timer-text');
+            const readingsCount = document.getElementById('dc-readings-count');
+            const barFill = document.getElementById('dc-bar-fill');
+            const status = document.getElementById('dc-status');
+            const timerPill = document.getElementById('dc-timer-pill');
+
+            // Check if device is connected by looking at hw-status-text
+            const hwStatusText = document.getElementById('hw-status-text').textContent;
+            if (hwStatusText !== 'Device Online') {
+                card.style.display = 'none';
+                collectionStartTime = null;
+                collectionComplete = false;
+                return;
+            }
+
+            card.style.display = 'block';
+
+            // Fetch history data
+            fetch('/api/hardware_history')
+                .then(r => r.json())
+                .then(hist => {
+                    if (!hist.device_id) return;
+
+                    const count = hist.count || 0;
+                    const maxReadings = hist.max_readings || 30;
+                    const pct = Math.min((count / maxReadings) * 100, 100);
+
+                    readingsCount.textContent = `${count} / ${maxReadings}`;
+                    barFill.style.width = pct + '%';
+
+                    // Calculate remaining time
+                    if (!collectionStartTime && hist.first_seen) {
+                        collectionStartTime = new Date(hist.first_seen + 'Z');
+                    }
+                    if (!collectionStartTime) {
+                        collectionStartTime = new Date();
+                    }
+
+                    const elapsed = (Date.now() - collectionStartTime.getTime()) / 1000;
+                    const remaining = Math.max(300 - elapsed, 0);
+                    const mins = Math.floor(remaining / 60);
+                    const secs = Math.floor(remaining % 60);
+
+                    if (count >= maxReadings || remaining <= 0) {
+                        timerText.textContent = 'Complete!';
+                        timerPill.style.background = 'rgba(61, 158, 140, 0.3)';
+                        timerPill.style.color = '#3d9e8c';
+                        barFill.style.background = 'linear-gradient(90deg, #3d9e8c, #5bb8a4)';
+                        status.textContent = '✅ Data collection complete! You can download the report.';
+                        status.style.color = '#3d9e8c';
+
+                        if (!collectionComplete) {
+                            collectionComplete = true;
+                            Swal.fire({
+                                title: '✅ Data Collection Complete!',
+                                html: `<p style="color:#ccc;">All ${maxReadings} sensor readings have been collected over 5 minutes.</p>
+                                       <p style="color:#999; margin-top:8px;">You can now download the full assessment report as an Excel file.</p>`,
+                                icon: 'success',
+                                background: '#1a1a2e',
+                                color: '#e0e0e0',
+                                confirmButtonColor: '#3d9e8c',
+                                confirmButtonText: '📥 Download Report',
+                                showCancelButton: true,
+                                cancelButtonText: 'Later',
+                                cancelButtonColor: '#555'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    document.getElementById('download-btn').click();
+                                }
+                            });
+                        }
+                    } else {
+                        timerText.textContent = `${mins}:${secs.toString().padStart(2, '0')} remaining`;
+                        status.textContent = `Collecting sensor data… (every 10s)`;
+                        status.style.color = '#aaa';
+                        barFill.style.background = 'linear-gradient(90deg, var(--plum), var(--amber))';
+                    }
+                })
+                .catch(() => { });
+        }
+
+        setInterval(updateDataCollectionTimer, 5000);
+        updateDataCollectionTimer();
+
+        /* Handle Download */
+        document.getElementById('download-btn').onclick = function () {
+            const deviceId = document.getElementById('hw-device-info').textContent.split(': ')[1];
+            if (deviceId && deviceId !== 'Not connected') {
+                window.location.href = `/api/export_data?device_id=${deviceId}`;
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Device Linked',
+                    text: 'Please connect your hardware device first to export data.',
+                    background: '#1a1a2e',
+                    color: '#e0e0e0',
+                    confirmButtonColor: '#7c5f8a'
+                });
+            }
+        };
+
+        /* Handle Reset Collection */
+        document.getElementById('dc-reset-btn').onclick = function () {
+            const deviceId = document.getElementById('hw-device-info').textContent.split(': ')[1];
+            Swal.fire({
+                title: '🔄 Reset Data Collection?',
+                html: '<p style="color:#ccc;">This will clear all collected sensor readings and start the 5-minute collection from scratch.</p>',
+                icon: 'warning',
+                background: '#1a1a2e',
+                color: '#e0e0e0',
+                showCancelButton: true,
+                confirmButtonColor: '#e07a5f',
+                cancelButtonColor: '#555',
+                confirmButtonText: 'Yes, Reset',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/api/reset_hardware', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ device_id: deviceId && deviceId !== 'Not connected' ? deviceId : '' })
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            // Reset frontend timer state
+                            collectionStartTime = null;
+                            collectionComplete = false;
+
+                            // Reset UI elements
+                            document.getElementById('dc-bar-fill').style.width = '0%';
+                            document.getElementById('dc-readings-count').textContent = '0 / 30';
+                            document.getElementById('dc-timer-text').textContent = '5:00 remaining';
+                            document.getElementById('dc-status').textContent = 'Waiting for new data…';
+                            document.getElementById('dc-status').style.color = '#aaa';
+                            document.getElementById('dc-timer-pill').style.background = '';
+                            document.getElementById('dc-timer-pill').style.color = '';
+                            document.getElementById('dc-bar-fill').style.background = '';
+
+                            Swal.fire({
+                                title: '✅ Reset Complete!',
+                                text: 'Data collection has been reset. New sensor readings will be collected as they arrive.',
+                                icon: 'success',
+                                background: '#1a1a2e',
+                                color: '#e0e0e0',
+                                confirmButtonColor: '#3d9e8c',
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                        })
+                        .catch(err => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Reset Failed',
+                                text: 'Could not reset data collection. Please try again.',
+                                background: '#1a1a2e',
+                                color: '#e0e0e0'
+                            });
+                        });
+                }
+            });
+        };
     </script>
 </body>
 
