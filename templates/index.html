@@ -277,6 +277,229 @@
             </div>
 
 
+            <!-- ── SECTION: Live Hardware Monitor ── -->
+            <div class="sec-label" style="margin-top:8px;">Live Hardware Monitor</div>
+
+            <div class="hw-monitor-card" id="hw-monitor-card">
+                <div class="hw-monitor-header">
+                    <div class="hw-monitor-title">
+                        <span class="hw-icon">📡</span>
+                        <span>ESP32 Sensor Data</span>
+                    </div>
+                    <div class="hw-status-pill" id="hw-status-pill">
+                        <div class="hw-status-dot"></div>
+                        <span id="hw-status-text">Waiting for device…</span>
+                    </div>
+                </div>
+                <div class="hw-metrics-grid">
+                    <div class="hw-metric-card hm-ppg">
+                        <div class="hm-icon">❤️</div>
+                        <div class="hm-value" id="hw-hr">--</div>
+                        <div class="hm-label">Heart Rate (bpm)</div>
+                    </div>
+                    <div class="hw-metric-card hm-spo2">
+                        <div class="hm-icon">💧</div>
+                        <div class="hm-value" id="hw-spo2">--</div>
+                        <div class="hm-label">SpO2 (%)</div>
+                    </div>
+                    <div class="hw-metric-card hm-eeg">
+                        <div class="hm-icon">🧠</div>
+                        <div class="hm-value" id="hw-alpha">--</div>
+                        <div class="hm-label">Alpha Power (%)</div>
+                    </div>
+                    <div class="hw-metric-card hm-imu">
+                        <div class="hm-icon">🚶</div>
+                        <div class="hm-value" id="hw-gait">--</div>
+                        <div class="hm-label">Gait Speed (m/s)</div>
+                    </div>
+                    <div class="hw-metric-card hm-temp">
+                        <div class="hm-icon">🌡️</div>
+                        <div class="hm-value" id="hw-temp">--</div>
+                        <div class="hm-label">Skin Temp (°C)</div>
+                    </div>
+                    <div class="hw-metric-card hm-steps">
+                        <div class="hm-icon">👣</div>
+                        <div class="hm-value" id="hw-steps">--</div>
+                        <div class="hm-label">Step Count</div>
+                    </div>
+                </div>
+                <div class="hw-device-info" id="hw-device-info">Device: Not connected</div>
+            </div>
+
+
+            <!-- ── SECTION: ML Parameters ── -->
+            <div class="sec-label" style="margin-top:8px;">ML Model Parameters</div>
+
+            <div class="ml-params-card" id="ml-params-card">
+                <div class="ml-params-header">
+                    <span class="ml-params-icon">⚙️</span>
+                    <span class="ml-params-title">All 14 Software + 15 Hardware Features Sent to ML Model</span>
+                </div>
+
+                <!-- Software Parameters -->
+                <div class="ml-group">
+                    <div class="ml-group-label">🧠 Software / Cognitive Parameters (14)</div>
+                    <div class="ml-group-sub">From Questionnaire, N-Back, and Memory Game</div>
+                    <div class="ml-params-grid" id="sw-params-grid">
+                        <!-- Filled by JS -->
+                        <div class="ml-param-row"><span class="mlp-name">Immediate Recall</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-immediate_recall"></div>
+                            </div><span class="mlp-val" id="mlv-immediate_recall">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Delayed Recall</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-delayed_recall"></div>
+                            </div><span class="mlp-val" id="mlv-delayed_recall">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Cue Benefit Index</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-cue_benefit_index"></div>
+                            </div><span class="mlp-val" id="mlv-cue_benefit_index">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Retention Ratio</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-retention_ratio"></div>
+                            </div><span class="mlp-val" id="mlv-retention_ratio">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Orientation Score</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-amber" id="mlp-orientation_score"></div>
+                            </div><span class="mlp-val" id="mlv-orientation_score">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Serial 7s Score</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-amber" id="mlp-serial7s_score"></div>
+                            </div><span class="mlp-val" id="mlv-serial7s_score">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Clock Drawing</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-clock_drawing_score"></div>
+                            </div><span class="mlp-val" id="mlv-clock_drawing_score">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Reaction Time</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-reaction_time_ms"></div>
+                            </div><span class="mlp-val" id="mlv-reaction_time_ms">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Error Consistency</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-error_consistency_norm"></div>
+                            </div><span class="mlp-val" id="mlv-error_consistency_norm">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Naming Task</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-sage" id="mlp-naming_task_score"></div>
+                            </div><span class="mlp-val" id="mlv-naming_task_score">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Sentence Repetition</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-sage" id="mlp-sentence_repetition_score"></div>
+                            </div><span class="mlp-val" id="mlv-sentence_repetition_score">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Verbal Fluency (WPM)</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-sage" id="mlp-verbal_fluency_wpm"></div>
+                            </div><span class="mlp-val" id="mlv-verbal_fluency_wpm">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">IADL Impairment</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-iadl_impairment_count"></div>
+                            </div><span class="mlp-val" id="mlv-iadl_impairment_count">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Mood Filter</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-mood_filter"></div>
+                            </div><span class="mlp-val" id="mlv-mood_filter">–</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hardware Parameters -->
+                <div class="ml-group">
+                    <div class="ml-group-label">📡 Hardware / Sensor Parameters (15)</div>
+                    <div class="ml-group-sub">From ESP32 Device (IMU, PPG/HRV, EEG)</div>
+                    <div class="ml-params-grid" id="hw-params-grid">
+                        <div class="ml-param-row"><span class="mlp-name">Gait Speed</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-gait_speed"></div>
+                            </div><span class="mlp-val" id="mlv-gait_speed">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Stride Variability</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-stride_variability"></div>
+                            </div><span class="mlp-val" id="mlv-stride_variability">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Turning Velocity</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-turning_velocity"></div>
+                            </div><span class="mlp-val" id="mlv-turning_velocity">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Postural Sway</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-teal" id="mlp-postural_sway"></div>
+                            </div><span class="mlp-val" id="mlv-postural_sway">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">RMSSD</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-rmssd"></div>
+                            </div><span class="mlp-val" id="mlv-rmssd">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">SDNN</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-sdnn"></div>
+                            </div><span class="mlp-val" id="mlv-sdnn">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">LF/HF Ratio</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-lf_hf_ratio"></div>
+                            </div><span class="mlp-val" id="mlv-lf_hf_ratio">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">SpO2</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-spo2"></div>
+                            </div><span class="mlp-val" id="mlv-spo2">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Desat Events</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-coral" id="mlp-desat_events"></div>
+                            </div><span class="mlp-val" id="mlv-desat_events">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Alpha Power</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-alpha_power"></div>
+                            </div><span class="mlp-val" id="mlv-alpha_power">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Theta Power</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-theta_power"></div>
+                            </div><span class="mlp-val" id="mlv-theta_power">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Delta Power</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-delta_power"></div>
+                            </div><span class="mlp-val" id="mlv-delta_power">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Theta/Alpha Ratio</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-theta_alpha_ratio"></div>
+                            </div><span class="mlp-val" id="mlv-theta_alpha_ratio">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Dominant Frequency</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-plum" id="mlp-dominant_frequency"></div>
+                            </div><span class="mlp-val" id="mlv-dominant_frequency">–</span>
+                        </div>
+                        <div class="ml-param-row"><span class="mlp-name">Daily Steps</span>
+                            <div class="mlp-bar-track">
+                                <div class="mlp-bar-fill mlp-amber" id="mlp-step_count"></div>
+                            </div><span class="mlp-val" id="mlv-step_count">–</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- ── SECTION: Start Assessments ── -->
             <div class="divider"></div>
             <div class="sec-label">Start an Assessment</div>
@@ -345,8 +568,8 @@
         const _db = getFirestore(_app);
 
         /**
-         * Fetch ML prediction data from Firebase for the logged-in user.
-         * Returns { mlPrediction, mlRiskLevel, scores } or null.
+         * Fetch ML prediction data + hw/sw params from Firebase for the logged-in user.
+         * Returns { mlPrediction, mlRiskLevel, scores, hw_params, sw_params } or null.
          */
         window.fetchFirebasePrediction = async function () {
             const uid = sessionStorage.getItem('nb_uid');
@@ -361,7 +584,10 @@
                     mlRiskLevel: scores.mlRiskLevel || null,
                     memory: scores.memory != null ? scores.memory : null,
                     nback: scores.nback != null ? scores.nback : null,
-                    questionnaire: scores.questionnaire || null
+                    questionnaire: scores.questionnaire || null,
+                    hw_params: data.hw_params || null,
+                    sw_params: data.sw_params || null,
+                    device_id: data.device_id || null
                 };
             } catch (e) {
                 console.warn('[Firebase] Could not fetch prediction:', e.message);
@@ -596,16 +822,17 @@
                 let riskScore = null;
                 let riskLevel = null;
                 let hasClinical = false;
+                const hwUsed = c.hardware_used === true || !!data.hardware_data;
 
-                // First: try backend clinical_result
-                if (hasAllAssessments && clinical && clinical.score != null) {
+                // Show ML prediction when hardware data was used
+                if (hasAllAssessments && hwUsed && clinical && clinical.score != null) {
                     riskScore = clinical.score;
                     riskLevel = clinical.label || null;
                     hasClinical = true;
                 }
 
-                // Fallback: try Firebase directly (only fetch once to avoid spamming)
-                if (!hasClinical && hasAllAssessments && !firebaseFetched) {
+                // Fallback: try Firebase directly
+                if (!hasClinical && hasAllAssessments && hwUsed && !firebaseFetched) {
                     firebaseFetched = true;
                     if (window.fetchFirebasePrediction) {
                         try {
@@ -641,7 +868,7 @@
                 }
 
                 // Use cached Firebase data if backend still doesn't have it
-                if (!hasClinical && hasAllAssessments && cachedFirebaseData) {
+                if (!hasClinical && hasAllAssessments && hwUsed && cachedFirebaseData) {
                     riskScore = cachedFirebaseData.mlPrediction;
                     riskLevel = cachedFirebaseData.mlRiskLevel || getRiskLevelFromScore(riskScore);
                     hasClinical = true;
@@ -652,26 +879,165 @@
                     const scoreDisplay = riskScore != null ? Math.round(riskScore) : '--';
                     if (finEl.textContent !== String(scoreDisplay)) animNum(finEl, scoreDisplay);
                     updateRiskDisplay(riskScore, riskLevel);
-                } else if (!hasAllAssessments) {
-                    if (finEl.textContent !== '--') animNum(finEl, '--');
-                    updateRiskDisplay(null, null);
-                } else {
-                    // All assessments done but no ML prediction yet — show awaiting ML
+                } else if (hasAllAssessments && !hwUsed) {
+                    // All 3 assessments done but NO hardware data yet
                     if (finEl.textContent !== '--') animNum(finEl, '--');
                     const rEl = document.getElementById('risk');
                     const bar = document.getElementById('risk-bar');
                     const pctEl = document.getElementById('risk-pct');
-                    rEl.innerHTML = '<div class="rp-dot" style="background:#888"></div> Processing ML prediction...';
+                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--orange, #e8a848)"></div> ⏳ Waiting for hardware parameters — connect ESP32 device to generate ML prediction';
+                    rEl.className = 'risk-pill rp-waiting';
+                    bar.style.width = '0%';
+                    bar.style.background = 'linear-gradient(90deg, var(--orange, #e8a848), #f6d365)';
+                    pctEl.textContent = '–';
+                } else if (hasAllAssessments && hwUsed && !hasClinical) {
+                    // Hardware + software both available but ML hasn't run yet
+                    if (finEl.textContent !== '--') animNum(finEl, '--');
+                    const rEl = document.getElementById('risk');
+                    const bar = document.getElementById('risk-bar');
+                    const pctEl = document.getElementById('risk-pct');
+                    rEl.innerHTML = '<div class="rp-dot" style="background:var(--orange, #e8a848)"></div> ⏳ Processing ML prediction… please wait';
                     rEl.className = 'risk-pill rp-waiting';
                     bar.style.width = '0%';
                     pctEl.textContent = '–';
-                    // Reset firebase flag so it tries again next cycle
-                    firebaseFetched = false;
+                } else {
+                    // Not all assessments done yet
+                    if (finEl.textContent !== '--') animNum(finEl, '--');
+                    updateRiskDisplay(null, null);
                 }
 
                 /* Progress banner */
                 const quizDone = c.questionnaire && c.questionnaire.total != null;
                 updateProgress(c.memory != null, c.nback != null, quizDone);
+
+                /* ─── Update Hardware Monitor ─── */
+                const hw = data.hardware_data;
+                if (hw) {
+                    const ppg = hw.ppg || {};
+                    const eeg = hw.eeg || {};
+                    const imu = hw.imu || {};
+                    const temp = hw.temperature || {};
+                    document.getElementById('hw-hr').textContent = ppg.heart_rate != null ? ppg.heart_rate : '--';
+                    document.getElementById('hw-spo2').textContent = ppg.spo2 != null ? ppg.spo2 : '--';
+                    document.getElementById('hw-alpha').textContent = eeg.alpha_power != null ? Math.round(eeg.alpha_power * 10) / 10 : '--';
+                    document.getElementById('hw-gait').textContent = imu.gait_speed != null ? imu.gait_speed : '--';
+                    document.getElementById('hw-temp').textContent = temp.skin_temp != null ? temp.skin_temp : '--';
+                    document.getElementById('hw-steps').textContent = imu.step_count != null ? imu.step_count : '--';
+                    document.getElementById('hw-status-text').textContent = 'Device Online';
+                    document.getElementById('hw-status-pill').classList.add('hw-online');
+                    document.getElementById('hw-device-info').textContent = 'Device: ' + (data.hardware_device_id || 'Unknown');
+                    document.getElementById('hw-monitor-card').classList.add('hw-connected');
+                } else {
+                    document.getElementById('hw-status-text').textContent = 'Waiting for device…';
+                    document.getElementById('hw-status-pill').classList.remove('hw-online');
+                    document.getElementById('hw-monitor-card').classList.remove('hw-connected');
+                }
+
+                /* ─── Update ML Parameters Display ─── */
+                const sw = data.software_features || {};
+                const cognitive = data.cognitive || {};
+
+                // Merge cognitive game params into 'sw' if they exist in cognitive but not in sw
+                const combined_sw = { ...sw };
+                if (cognitive.reaction_time_ms != null && combined_sw.reaction_time_ms == null) {
+                    combined_sw.reaction_time_ms = cognitive.reaction_time_ms;
+                }
+                if (cognitive.error_consistency_norm != null && combined_sw.error_consistency_norm == null) {
+                    combined_sw.error_consistency_norm = cognitive.error_consistency_norm;
+                }
+
+                // Software params (0-1 scale unless noted)
+                const swParams = [
+                    { key: 'immediate_recall', max: 3, label: 'Memory' },
+                    { key: 'delayed_recall', max: 3, label: 'Recall' },
+                    { key: 'cue_benefit_index', max: 1 },
+                    { key: 'retention_ratio', max: 1 },
+                    { key: 'orientation_score', max: 5 },
+                    { key: 'serial7s_score', max: 5 },
+                    { key: 'clock_drawing_score', max: 5 },
+                    { key: 'reaction_time_ms', max: 2000, invert: true, min: 200 },
+                    { key: 'error_consistency_norm', max: 1, invert: true },
+                    { key: 'naming_task_score', max: 2 },
+                    { key: 'sentence_repetition_score', max: 1 },
+                    { key: 'verbal_fluency_wpm', max: 15 },
+                    { key: 'iadl_impairment_count', max: 6, invert: true },
+                    { key: 'mood_filter', max: 1, invert: true },
+                ];
+                swParams.forEach(p => {
+                    const bar = document.getElementById('mlp-' + p.key);
+                    const val = document.getElementById('mlv-' + p.key);
+                    if (bar && val) {
+                        let v = combined_sw[p.key];
+                        if (v != null) {
+                            // Display the raw value
+                            val.textContent = (typeof v === 'number') ? (v % 1 === 0 ? v : v.toFixed(2)) : v;
+
+                            // 1. Width represents raw magnitude (0 value = 0% bar)
+                            let rawRatio;
+                            if (p.key === 'reaction_time_ms') {
+                                rawRatio = Math.min(Math.max(v - 200, 0), 1800) / 1800;
+                            } else {
+                                rawRatio = Math.min(v / p.max, 1.0);
+                            }
+                            // Set width (at least 5% if v > 0 so color is visible)
+                            bar.style.width = (v > 0 ? Math.max(rawRatio, 0.05) : 0) * 100 + '%';
+
+                            // 2. Color represents clinical healthiness
+                            let healthNorm = p.invert ? (1.0 - rawRatio) : rawRatio;
+                            if (healthNorm < 0.3) {
+                                bar.style.background = 'var(--coral)'; // Red/Alert
+                            } else if (healthNorm < 0.7) {
+                                bar.style.background = 'var(--amber)'; // Orange/Warning
+                            } else {
+                                bar.style.background = 'var(--teal)';  // Green/Healthy
+                            }
+                        } else {
+                            val.textContent = '–';
+                            bar.style.width = '0%';
+                        }
+                    }
+                });
+
+                // Hardware params (raw values with known clinical ranges)
+                if (hw) {
+                    const imu = hw.imu || {};
+                    const ppg = hw.ppg || {};
+                    const eeg = hw.eeg || {};
+                    const hwParams = [
+                        { key: 'gait_speed', src: imu, max: 1.6 },
+                        { key: 'stride_variability', src: imu, max: 10, invert: true },
+                        { key: 'turning_velocity', src: imu, max: 200 },
+                        { key: 'postural_sway', src: imu, max: 10, invert: true },
+                        { key: 'rmssd', src: ppg, max: 80 },
+                        { key: 'sdnn', src: ppg, max: 100 },
+                        { key: 'lf_hf_ratio', src: ppg, max: 5, invert: true },
+                        { key: 'spo2', src: ppg, max: 100 },
+                        { key: 'desat_events', src: ppg, max: 10, invert: true },
+                        { key: 'alpha_power', src: eeg, max: 50 },
+                        { key: 'theta_power', src: eeg, max: 50, invert: true },
+                        { key: 'delta_power', src: eeg, max: 40, invert: true },
+                        { key: 'theta_alpha_ratio', src: eeg, max: 3, invert: true },
+                        { key: 'dominant_frequency', src: eeg, max: 12 },
+                        { key: 'step_count', src: imu, max: 10000 },
+                    ];
+                    hwParams.forEach(p => {
+                        const bar = document.getElementById('mlp-' + p.key);
+                        const val = document.getElementById('mlv-' + p.key);
+                        if (bar && val && p.src[p.key] != null) {
+                            const v = p.src[p.key];
+                            val.textContent = (typeof v === 'number') ? (v % 1 === 0 ? v : v.toFixed(2)) : v;
+
+                            let rawRatio = Math.min(v / p.max, 1.0);
+                            bar.style.width = (v > 0 ? Math.max(rawRatio, 0.05) : 0) * 100 + '%';
+
+                            // Color based on healthiness
+                            let healthNorm = p.invert ? (1.0 - rawRatio) : rawRatio;
+                            if (healthNorm < 0.3) bar.style.background = 'var(--coral)'; // Red
+                            else if (healthNorm < 0.7) bar.style.background = 'var(--amber)'; // Orange
+                            else bar.style.background = 'var(--teal)'; // Green
+                        }
+                    });
+                }
 
             } catch (e) {
                 // silently retry

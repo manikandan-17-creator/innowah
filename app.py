@@ -10,6 +10,10 @@ import requests
 import logging
 from datetime import datetime
 
+# ── Firebase Admin SDK ────────────────────────────────────────────────────────
+import firebase_admin
+from firebase_admin import credentials, firestore
+
 app = Flask(__name__)
 CORS(app)
 app.secret_key = 'neurobandplus_secret_key_change_in_production'
@@ -44,6 +48,224 @@ else:
     logger.info("No INNOWAH trained model found — using rule-based clinical engine.")
 
 # ══════════════════════════════════════════════════════════════════════════════
+# FIREBASE ADMIN INITIALIZATION
+# ══════════════════════════════════════════════════════════════════════════════
+
+import json
+
+FIREBASE_JSON = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+FIREBASE_CRED_PATH = os.environ.get("FIREBASE_CRED_PATH", "serviceAccountKey.json")
+firestore_db = None
+
+try:
+    if FIREBASE_JSON:
+        # 1. Try loading from environment variable (JSON string) - Recommended for Render
+        logger.info("Initializing Firebase from environment variable...")
+        cred_dict = json.loads(FIREBASE_JSON)
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+        firestore_db = firestore.client()
+        logger.info("✅ Firebase Admin SDK initialized from Environment Variable.")
+    elif os.path.exists(FIREBASE_CRED_PATH):
+        # 2. Try loading from local file - Used for local development
+        cred = credentials.Certificate(FIREBASE_CRED_PATH)
+        firebase_admin.initialize_app(cred)
+        firestore_db = firestore.client()
+        logger.info(f"✅ Firebase Admin SDK initialized from {FIREBASE_CRED_PATH}.")
+    else:
+        logger.warning("⚠️ No Firebase credentials found (env or file). Firestore disabled.")
+except Exception as e:
+    logger.warning(f"⚠️ Firebase Admin SDK init failed: {e}. Firestore writes disabled.")
+
+
+# ── Firestore Helper Functions ────────────────────────────────────────────────
+
+def find_user_by_device_id(device_id):
+    """Look up the user UID that registered with this device_id in Firestore."""
+    if not firestore_db or not device_id:
+        return None
+    try:
+        users_ref = firestore_db.collection('users')
+        query = users_ref.where('device_id', '==', device_id).limit(1).get()
+        for doc in query:
+            return doc.id  # This is the UID
+        return None
+    except Exception as e:
+        logger.warning(f"[Firestore] Error looking up device_id '{device_id}': {e}")
+        return None
+
+
+def save_hw_params_to_firestore(uid, hardware_data):
+    """Save the 15 hardware parameters to the user's Firestore document."""
+    if not firestore_db or not uid:
+        return False
+    try:
+        imu = hardware_data.get('imu', {})
+        ppg = hardware_data.get('ppg', {})
+        eeg = hardware_data.get('eeg', {})
+        temp = hardware_data.get('temperature', {})
+
+        hw_params = {
+            'imu': {
+                'gait_speed': imu.get('gait_speed'),
+                'stride_variability': imu.get('stride_variability'),
+                'turning_velocity': imu.get('turning_velocity'),
+                'postural_sway': imu.get('postural_sway'),
+                'step_count': imu.get('step_count'),
+            },
+            'ppg': {
+                'heart_rate': ppg.get('heart_rate'),
+                'spo2': ppg.get('spo2'),
+                'rmssd': ppg.get('rmssd'),
+                'sdnn': ppg.get('sdnn'),
+                'lf_hf_ratio': ppg.get('lf_hf_ratio'),
+                'desat_events': ppg.get('desat_events', 0),
+            },
+            'eeg': {
+                'alpha_power': eeg.get('alpha_power'),
+                'theta_power': eeg.get('theta_power'),
+                'delta_power': eeg.get('delta_power'),
+                'theta_alpha_ratio': eeg.get('theta_alpha_ratio'),
+                'dominant_frequency': eeg.get('dominant_frequency'),
+            },
+            'temperature': {
+                'skin_temp': temp.get('skin_temp'),
+            },
+            'lastUpdated': firestore.SERVER_TIMESTAMP
+        }
+
+        firestore_db.collection('users').document(uid).set(
+            {'hw_params': hw_params}, merge=True
+        )
+        logger.info(f"[Firestore] ✅ Hardware params saved for user {uid}")
+        return True
+    except Exception as e:
+        logger.warning(f"[Firestore] Error saving hw_params for {uid}: {e}")
+        return False
+
+
+def save_sw_params_to_firestore(uid, software_data):
+    """Save the 14 software parameters to the user's Firestore document."""
+    if not firestore_db or not uid:
+        return False
+    try:
+        sw_params = {
+            'immediate_recall': software_data.get('immediate_recall'),
+            'delayed_recall': software_data.get('delayed_recall'),
+            'cue_benefit_index': software_data.get('cue_benefit_index'),
+            'retention_ratio': software_data.get('retention_ratio'),
+            'orientation_score': software_data.get('orientation_score'),
+            'serial7s_score': software_data.get('serial7s_score'),
+            'clock_drawing_score': software_data.get('clock_drawing_score'),
+            'reaction_time_ms': software_data.get('reaction_time_ms'),
+            'error_consistency_norm': software_data.get('error_consistency_norm'),
+            'naming_task_score': software_data.get('naming_task_score'),
+            'sentence_repetition_score': software_data.get('sentence_repetition_score'),
+            'verbal_fluency_wpm': software_data.get('verbal_fluency_wpm'),
+            'iadl_impairment_count': software_data.get('iadl_impairment_count'),
+            'mood_filter': software_data.get('mood_filter'),
+            'lastUpdated': firestore.SERVER_TIMESTAMP
+        }
+
+        firestore_db.collection('users').document(uid).set(
+            {'sw_params': sw_params}, merge=True
+        )
+        logger.info(f"[Firestore] ✅ Software params saved for user {uid}")
+        return True
+    except Exception as e:
+        logger.warning(f"[Firestore] Error saving sw_params for {uid}: {e}")
+        return False
+
+
+def get_user_params_from_firestore(uid):
+    """Read both hw_params and sw_params from Firestore for a user."""
+    if not firestore_db or not uid:
+        return None, None
+    try:
+        doc = firestore_db.collection('users').document(uid).get()
+        if not doc.exists:
+            return None, None
+        data = doc.to_dict()
+        return data.get('sw_params'), data.get('hw_params')
+    except Exception as e:
+        logger.warning(f"[Firestore] Error reading params for {uid}: {e}")
+        return None, None
+
+
+def save_prediction_to_firestore(uid, risk_score, risk_level, recommendation=""):
+    """Save the ML prediction result to Firestore."""
+    if not firestore_db or not uid:
+        return False
+    try:
+        firestore_db.collection('users').document(uid).set({
+            'scores': {
+                'mlPrediction': risk_score,
+                'mlRiskLevel': risk_level,
+                'lastUpdated': firestore.SERVER_TIMESTAMP
+            }
+        }, merge=True)
+        logger.info(f"[Firestore] ✅ ML prediction saved for user {uid}: {risk_level} ({risk_score})")
+        return True
+    except Exception as e:
+        logger.warning(f"[Firestore] Error saving prediction for {uid}: {e}")
+        return False
+
+
+def try_run_prediction_from_firestore(uid):
+    """
+    Check if both sw_params and hw_params exist in Firestore for this user.
+    If yes, run the ML model and save the prediction back to Firestore.
+    Returns the prediction result or None.
+    """
+    sw_params, hw_params = get_user_params_from_firestore(uid)
+    if not sw_params or not hw_params:
+        logger.info(f"[Firestore] User {uid}: waiting for {'sw_params' if not sw_params else 'hw_params'}")
+        return None
+
+    # Check that hw_params has actual sensor data (not just the lastUpdated field)
+    has_hw = any([
+        hw_params.get('imu', {}).get('gait_speed') is not None,
+        hw_params.get('ppg', {}).get('heart_rate') is not None,
+        hw_params.get('eeg', {}).get('alpha_power') is not None,
+    ])
+    if not has_hw:
+        logger.info(f"[Firestore] User {uid}: hw_params exist but no sensor values yet")
+        return None
+
+    logger.info(f"[Firestore] User {uid}: Both SW + HW params available — running ML prediction")
+
+    # Build feature vector from Firestore data
+    fv = extract_innowah_features(software_data=sw_params, hardware_data=hw_params)
+    result = run_innowah_inference(fv)
+
+    risk_score = round(result.get('risk_score', 0.0) * 0.6, 2)
+    risk_level = result.get('risk_level', 'Normal')
+    recommendation = result.get('recommendation', '')
+
+    # Save prediction to Firestore
+    save_prediction_to_firestore(uid, risk_score, risk_level, recommendation)
+
+    # Also update the Flask session if this user is currently logged in
+    scores = get_session_scores()
+    level_map = {'Normal': 0, 'Mild Risk': 1, 'High Risk': 2}
+    scores['clinical_result'] = {
+        'level_idx': level_map.get(risk_level, 0),
+        'label': risk_level,
+        'score': risk_score,
+        'recommendation': recommendation,
+        'hardware_used': True
+    }
+    scores['ml_prediction'] = level_map.get(risk_level, 0)
+    scores['hardware_used'] = True
+    save_session_scores(scores)
+
+    return {
+        'risk_score': risk_score,
+        'risk_level': risk_level,
+        'recommendation': recommendation
+    }
+
+# ══════════════════════════════════════════════════════════════════════════════
 # STORE SCORES
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -56,9 +278,11 @@ def get_session_scores():
             "final":         None,
             "ml_prediction": None,
             "questionnaire": None,
-            "reaction_time_ms": 700,
-            "error_consistency_norm": 0.2,
-            "clinical_result": None  # Stores {level_idx, label, score, recommendation}
+            "reaction_time_ms": None,
+            "error_consistency_norm": None,
+            "clinical_result": None,  # Stores {level_idx, label, score, recommendation, hardware_used}
+            "software_features_saved": False,  # True when questionnaire software features stored
+            "hardware_used": False  # True when ESP32 hardware data was used for prediction
         }
     return session['cognitive_scores']
 
@@ -93,7 +317,15 @@ NORM_PARAMS = {
     "daily_steps":         (0.0,    10000, True),
     "reaction_time":       (200.0,  2000.0,False),
     "verbal_fluency":      (0.0,    30.0,  True),
-    "iadl_impairments":    (0.0,    8.0,   False),
+    "iadl_impairments":    (0.0,    6.0,   False),
+    "immediate_recall":    (0.0,    3.0,   True),
+    "delayed_recall":      (0.0,    3.0,   True),
+    "orientation_score":   (0.0,    5.0,   True),
+    "serial7s_score":      (0.0,    5.0,   True),
+    "clock_drawing_score": (0.0,    5.0,   True),
+    "naming_task_score":   (0.0,    2.0,   True),
+    "sentence_repetition": (0.0,    1.0,   True),
+    "mood_filter":         (0.0,    1.0,   False),
 }
 
 def _norm(value, key):
@@ -105,21 +337,13 @@ def _norm(value, key):
     return n if higher_is_better else (1.0 - n)
 
 def _get(d, key, default=0.5):
-    v = d.get(key, default)
-    return 0.5 if v is None else float(v)
+    v = d.get(key)
+    return float(v) if v is not None else float(default)
 
 def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.ndarray:
     """
     Build a 31-dim feature vector from cognitive test + ESP32 sensor data.
     All values normalized to [0,1] where 1 = healthy end of spectrum.
-
-    Layout:
-      [0–13]  Software / cognitive (14 features)
-      [14–17] IMU (4 features)
-      [18–22] PPG/HRV (5 features)
-      [23–30] EEG (8 features)
-      [29] sensor_score              (0.40 weighted component)
-      [30] cognitive_score           (0.60 weighted component)
     """
     sw  = software_data  or {}
     hw  = hardware_data  or {}
@@ -127,38 +351,37 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
     ppg = hw.get("ppg",  {})
     eeg = hw.get("eeg",  {})
 
-    # ── Software features [0–13] ─────────────────────────────────────────────
     # Map existing cognitive game scores into the vector when available
     scores = get_session_scores()
-    memory_raw = scores.get("memory")
-    nback_raw  = scores.get("nback")
+    memory_raw = scores.get("memory") # 0-100
+    nback_raw  = scores.get("nback")  # 0-100
 
-    # Ensure memory/nback are 0-1 (they are 0-100 in session)
-    mem_norm = (memory_raw / 100.0) if memory_raw is not None else 0.5
-    nb_norm  = (nback_raw  / 100.0) if nback_raw  is not None else 0.5
-
-    immediate_recall  = _get(sw, "immediate_recall",  mem_norm)
-    delayed_recall    = _get(sw, "delayed_recall",    mem_norm)
+    # Software features [0–13]
+    # We now expect RAW values from the questionnaire, so we MUST normalize them here for ML
+    
+    immediate_recall  = _norm(_get(sw, "immediate_recall", (memory_raw/100.0*3) if memory_raw is not None else 1.5), "immediate_recall")
+    delayed_recall    = _norm(_get(sw, "delayed_recall",   (memory_raw/100.0*3) if memory_raw is not None else 1.5), "delayed_recall")
+    
     cue_benefit       = _get(sw, "cue_benefit_index", 0.5)
     retention_ratio   = _get(sw, "retention_ratio",   0.5)
-    orientation       = _get(sw, "orientation_score", 0.5)
-    serial7s          = _get(sw, "serial7s_score",    nb_norm)
-    clock_drawing     = _get(sw, "clock_drawing_score",0.5)
-    sw_rt = sw.get("reaction_time_ms", 700)
-    if sw_rt == 700 and scores.get("reaction_time_ms") and scores["reaction_time_ms"] != 700:
-        sw_rt = scores["reaction_time_ms"]
+    
+    orientation       = _norm(_get(sw, "orientation_score", 3.0),   "orientation_score")
+    serial7s          = _norm(_get(sw, "serial7s_score",   (nback_raw/100.0*5) if nback_raw is not None else 2.5), "serial7s_score")
+    clock_drawing     = _norm(_get(sw, "clock_drawing_score", 3.0), "clock_drawing_score")
+    
+    # Reaction Time (ms)
+    sw_rt = sw.get("reaction_time_ms") or scores.get("reaction_time_ms") or 700
     reaction_time = _norm(float(sw_rt), "reaction_time")
 
-    sw_ec = sw.get("error_consistency_norm", 0.2)
-    if sw_ec == 0.2 and scores.get("error_consistency_norm") and scores["error_consistency_norm"] != 0.2:
-        sw_ec = scores["error_consistency_norm"]
+    # Error Consistency (0-1)
+    sw_ec = sw.get("error_consistency_norm") or scores.get("error_consistency_norm") or 0.2
     error_consistency = 1.0 - float(sw_ec)
 
-    naming_task       = _get(sw, "naming_task_score", 0.5)
-    sentence_rep      = _get(sw, "sentence_repetition_score", 0.5)
-    verbal_fluency    = _norm(_get(sw, "verbal_fluency_wpm", 12), "verbal_fluency")
+    naming_task       = _norm(_get(sw, "naming_task_score", 1.0),   "naming_task_score")
+    sentence_rep      = _norm(_get(sw, "sentence_repetition_score", 1.0), "sentence_repetition")
+    verbal_fluency    = _norm(_get(sw, "verbal_fluency_wpm", 12),   "verbal_fluency")
     iadl              = _norm(_get(sw, "iadl_impairment_count", 1), "iadl_impairments")
-    mood_filter       = _get(sw, "mood_filter", 0.0)
+    mood_filter       = _norm(_get(sw, "mood_filter", 0.0),         "mood_filter")
 
     sw_vec = np.array([
         immediate_recall, delayed_recall, cue_benefit, retention_ratio,
@@ -190,7 +413,7 @@ def extract_innowah_features(software_data: dict, hardware_data: dict) -> np.nda
         _norm(_get(imu, "step_count",          5000),  "daily_steps"),
     ], dtype=np.float32)
 
-    # ── Aggregate scores (40:60 rule: sensor 40%, cognitive 60%) ─────────────
+    # Aggregates
     sensor_score    = float(np.mean(hw_vec))
     cognitive_score = float(np.mean(sw_vec))
     agg_vec = np.array([sensor_score, cognitive_score], dtype=np.float32)
@@ -376,32 +599,11 @@ def update_scores():
 
     response_data = {"status": "ok"}
 
-    # Only attempt ML prediction when both game scores are present
+    # Compute average final score (for display only — NOT an ML prediction)
     if scores["memory"] is not None and scores["nback"] is not None:
-        try:
-            scores["final"] = round(
-                (scores["memory"] + scores["nback"]) / 2, 2
-            )
-            # This is the Game Performance Model (Local)
-            features = np.array([[
-                scores["memory"],
-                scores["nback"],
-                scores["final"]
-            ]])
-            prediction = model.predict(features)
-            game_pred = int(prediction[0])
-            
-            # If we don't have a full clinical result yet, use this as a fallback
-            if scores.get("clinical_result") is None:
-                scores["ml_prediction"] = game_pred
-                response_data["mlPrediction"] = game_pred
-            else:
-                # Keep the clinical level in sync
-                scores["ml_prediction"] = scores["clinical_result"].get("level_idx", game_pred)
-                response_data["mlPrediction"] = scores["ml_prediction"]
-
-        except Exception as e:
-            logger.warning(f"[update_scores] local model predict failed: {e}")
+        scores["final"] = round(
+            (scores["memory"] + scores["nback"]) / 2, 2
+        )
 
     save_session_scores(scores)
     return jsonify(response_data)
@@ -440,16 +642,77 @@ def save_firebase_scores():
 
 @app.route("/api/clear_session", methods=["POST"])
 def clear_session():
-    scores = get_session_scores()
-    for k in ["memory", "nback", "final", "ml_prediction", "questionnaire", "clinical_result"]:
-        scores[k] = None
-    save_session_scores(scores)
+    # Delete from session entirely to force default re-initialization
+    session.pop('cognitive_scores', None)
+    session.pop('software_features', None)
+    session.modified = True
     return jsonify({"status": "ok"})
 
 
 @app.route("/get_data")
 def get_data():
-    return jsonify({"cognitive": get_session_scores()})
+    scores = get_session_scores()
+    sw_features = session.get("software_features", None)
+
+    # Find latest hardware data (from any device, or linked device)
+    device_id = session.get("device_id", "")
+    latest_hw = None
+    if device_id and device_id in hardware_sessions and hardware_sessions[device_id]:
+        latest_hw = hardware_sessions[device_id][-1]["hardware"]
+    elif hardware_sessions:
+        # Fallback: use the most recently updated device
+        for did, readings in hardware_sessions.items():
+            if readings:
+                latest_hw = readings[-1]["hardware"]
+                device_id = did
+
+    # If hardware is available in RAM, mark it so the dashboard knows
+    if latest_hw and not scores.get("hardware_used"):
+        scores["hardware_used"] = True
+
+        # ── Auto-trigger ML prediction if software features exist ──
+        sw_features_for_ml = session.get("software_features")
+        
+        # We RE-TRIGGER if:
+        # 1. No prediction exists yet, OR
+        # 2. We haven't updated the prediction with this latest set of hardware data
+        force_update = scores.get("last_hw_timestamp") != latest_hw.get("timestamp") # if we had timestamps
+        # Simplified: if we are in testing/live mode, we can just allow it to re-run
+        # if the hardware data is present. 
+        
+        if sw_features_for_ml:
+            try:
+                fv = extract_innowah_features(software_data=sw_features_for_ml, hardware_data=latest_hw)
+                result = run_innowah_inference(fv)
+
+                level_map = {"Normal": 0, "Mild Risk": 1, "High Risk": 2}
+                risk_level_str = result.get("risk_level", "Normal")
+                level_idx = level_map.get(risk_level_str, 0)
+                risk_score = round(result.get("risk_score", 0.0) * 0.6, 2)
+
+                scores["clinical_result"] = {
+                    "level_idx": level_idx,
+                    "label":     risk_level_str,
+                    "score":     risk_score,
+                    "recommendation": result.get("recommendation", ""),
+                    "hardware_used": True
+                }
+                scores["ml_prediction"] = level_idx
+                scores["hardware_used"] = True
+                save_session_scores(scores)
+                logger.info(
+                    f"[Dashboard] ✅ Auto-triggered ML prediction: "
+                    f"{risk_level_str} (score={risk_score})"
+                )
+            except Exception as e:
+                logger.warning(f"[Dashboard] Auto-prediction in get_data failed: {e}")
+
+    return jsonify({
+        "cognitive": scores,
+        "software_features": sw_features,
+        "hardware_data": latest_hw,
+        "hardware_device_id": device_id if latest_hw else None
+    })
 
 
 @app.route("/evaluate-fold", methods=["POST"])
@@ -532,6 +795,60 @@ def evaluate_fold():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SAVE SOFTWARE FEATURES (from questionnaire, before hardware arrives)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.route("/api/save_software_features", methods=["POST"])
+def save_software_features():
+    """
+    Called by the questionnaire after submission to store the 14 software/cognitive
+    features. Saves to both Flask session AND Firebase Firestore.
+    If hardware params already exist in Firestore for this user, auto-triggers ML prediction.
+    """
+    data = request.get_json(force=True)
+    if not data:
+        return jsonify({"status": "error", "message": "No JSON body"}), 400
+
+    scores = get_session_scores()
+    scores["software_features_saved"] = True
+
+    # Store the software features in the session for later use
+    session["software_features"] = data
+    session.modified = True
+    save_session_scores(scores)
+
+    logger.info(f"[Software Features] Saved 14 software parameters for device='{data.get('device_id','?')}'")
+
+    # ── Save software params to Firestore ──────────────────────────────────
+    uid = session.get("user_uid") or data.get("uid")
+    device_id = data.get("device_id", "")
+    prediction_result = None
+
+    # If no uid in session, try to find by device_id
+    if not uid and device_id:
+        uid = find_user_by_device_id(device_id)
+
+    if uid:
+        saved = save_sw_params_to_firestore(uid, data)
+        if saved:
+            # Check if hardware params already exist → auto-trigger prediction
+            prediction_result = try_run_prediction_from_firestore(uid)
+    else:
+        logger.info("[Software Features] No user uid found — skipping Firestore save")
+
+    response = {
+        "status": "ok",
+        "message": "Software features saved.",
+        "firestore_saved": uid is not None,
+        "ml_triggered": prediction_result is not None
+    }
+    if prediction_result:
+        response["prediction"] = prediction_result
+
+    return jsonify(response), 200
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # NEW: INNOWAH HARDWARE + ML ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -563,6 +880,7 @@ def receive_hardware_data():
     if not device_id or device_id == "unknown":
         return jsonify({"status": "error", "message": "device_id is required"}), 400
 
+    # ── 1. Store in RAM for live dashboard ─────────────────────────────────
     reading = {
         "timestamp": datetime.utcnow().isoformat(),
         "hardware":  data
@@ -583,11 +901,64 @@ def receive_hardware_data():
         f"Alpha={data.get('eeg',{}).get('alpha_power','?')}%"
     )
 
+    # ── 2. Find user by device_id and save to Firestore ────────────────────
+    ml_triggered = False
+    prediction_result = None
+    user_uid = find_user_by_device_id(device_id)
+
+    if user_uid:
+        # Save hardware params to this user's Firestore document
+        saved = save_hw_params_to_firestore(user_uid, data)
+
+        if saved:
+            # ── 3. Auto-trigger ML if software params already exist ────────
+            prediction_result = try_run_prediction_from_firestore(user_uid)
+            ml_triggered = prediction_result is not None
+    else:
+        logger.info(f"[ESP32] No user found for device_id '{device_id}' — hardware data stored in RAM only")
+
+    # ── Also try session-based auto-trigger (fallback) ─────────────────────
+    if not ml_triggered:
+        scores = get_session_scores()
+        sw_features = session.get("software_features")
+
+        if scores.get("software_features_saved") and sw_features:
+            try:
+                fv = extract_innowah_features(software_data=sw_features, hardware_data=data)
+                result = run_innowah_inference(fv)
+
+                level_map = {"Normal": 0, "Mild Risk": 1, "High Risk": 2}
+                risk_level_str = result.get("risk_level", "Normal")
+                level_idx = level_map.get(risk_level_str, 0)
+
+                scores["clinical_result"] = {
+                    "level_idx": level_idx,
+                    "label":     risk_level_str,
+                    "score":     round(result.get("risk_score", 0.0) * 0.6, 2),
+                    "recommendation": result.get("recommendation", ""),
+                    "hardware_used": True
+                }
+                scores["ml_prediction"] = level_idx
+                scores["hardware_used"] = True
+                save_session_scores(scores)
+                ml_triggered = True
+
+                logger.info(
+                    f"[ESP32] ✅ Session-based ML prediction for device={device_id}: "
+                    f"{risk_level_str} (score={scores['clinical_result']['score']})"
+                )
+            except Exception as e:
+                logger.warning(f"[ESP32] Session-based auto-prediction failed: {e}")
+
     return jsonify({
         "status":          "ok",
         "device_id":       device_id,
+        "user_found":      user_uid is not None,
+        "firestore_saved": user_uid is not None,
         "timestamp":       reading["timestamp"],
-        "readings_stored": len(hardware_sessions[device_id])
+        "readings_stored": len(hardware_sessions[device_id]),
+        "ml_triggered":    ml_triggered,
+        "prediction":      prediction_result
     }), 200
 
 
@@ -841,6 +1212,7 @@ def render_predict():
     # ── Update session scores for dashboard ────────────────────────────
     # Use render result if available, otherwise local result
     prediction = render_result if render_result else local_result
+    hw_was_used = bool(latest_hw)
     
     if prediction:
         scores = get_session_scores()
@@ -850,19 +1222,22 @@ def render_predict():
         risk_level_str = prediction.get("risk_level", "Normal")
         level_idx = level_map.get(risk_level_str, 0)
         
-        # Save full clinical assessment
-        scores["clinical_result"] = {
-            "level_idx": level_idx,
-            "label":     risk_level_str,
-            "score":     prediction.get("risk_score", 0.0),
-            "recommendation": prediction.get("recommendation", "")
-        }
-        
-        # Overwrite the simpler ml_prediction so dashboard pill updates
-        scores["ml_prediction"] = level_idx
+        # Only save clinical_result when hardware data was actually used
+        if hw_was_used:
+            scores["clinical_result"] = {
+                "level_idx": level_idx,
+                "label":     risk_level_str,
+                "score":     prediction.get("risk_score", 0.0),
+                "recommendation": prediction.get("recommendation", ""),
+                "hardware_used": True
+            }
+            scores["ml_prediction"] = level_idx
+            scores["hardware_used"] = True
+            logger.info(f"[Render Predict] ✅ Hardware used — clinical result saved: {scores['clinical_result']}")
+        else:
+            logger.info(f"[Render Predict] ⏳ No hardware data — clinical result NOT saved. Prediction available but waiting for ESP32.")
         
         save_session_scores(scores)
-        logger.info(f"[Render Predict] Finalized clinical result: {scores['clinical_result']}")
 
     return jsonify({
         "status":          "ok",

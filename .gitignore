@@ -16,3 +16,4 @@ venv/
 *.log
 
 # git commit -m "ML MODEL PARAMETERS UPDATED"
+serviceAccountKey.json

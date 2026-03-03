@@ -12,7 +12,7 @@
 
 </head>
 
-<body>
+<body autocomplete="off">
   <canvas id="confetti"></canvas>
 
   <!-- HEADER -->
@@ -167,11 +167,11 @@
         <div class="q-lbl">1. What is today's date? <span>(Fill in day, month and year)</span></div>
         <div class="grid-3" style="margin-bottom:14px">
           <div><label class="inp-label">Day (1–31)</label><input class="inp" id="o-day" type="number" min="1" max="31"
-              placeholder="e.g. 14"></div>
+              placeholder="e.g. 14" autocomplete="off"></div>
           <div><label class="inp-label">Month (1–12)</label><input class="inp" id="o-month" type="number" min="1"
-              max="12" placeholder="e.g. 6"></div>
+              max="12" placeholder="e.g. 6" autocomplete="off"></div>
           <div><label class="inp-label">Year</label><input class="inp" id="o-year" type="number" min="2000" max="2100"
-              placeholder="e.g. 2025"></div>
+              placeholder="e.g. 2025" autocomplete="off"></div>
         </div>
         <div class="q-lbl" style="margin-bottom:8px">2. What day of the week is it?</div>
         <div class="day-grid" id="day-grid">
@@ -208,7 +208,7 @@
 
       <div class="card">
         <div class="q-lbl">4. What city or state are you currently in?</div>
-        <input class="inp" id="o-city" type="text" placeholder="Type your city or state...">
+        <input class="inp" id="o-city" type="text" placeholder="Type your city or state..." autocomplete="off">
       </div>
 
       <div class="err" id="err-2">⚠️ Please fill in every field — date, day of week, location, and city/state.</div>
@@ -441,11 +441,11 @@
         <div class="obj-grid">
           <div class="obj-wrap">
             <div class="obj-display"><span class="obj-emoji">⌚</span><span class="obj-sub">Object 1</span></div>
-            <input class="inp" id="lang-o1" type="text" placeholder="What is this called?">
+            <input class="inp" id="lang-o1" type="text" placeholder="What is this called?" autocomplete="off">
           </div>
           <div class="obj-wrap">
             <div class="obj-display"><span class="obj-emoji">✏️</span><span class="obj-sub">Object 2</span></div>
-            <input class="inp" id="lang-o2" type="text" placeholder="What is this called?">
+            <input class="inp" id="lang-o2" type="text" placeholder="What is this called?" autocomplete="off">
           </div>
         </div>
       </div>
@@ -697,14 +697,16 @@
       <div class="card">
         <div class="recall-list">
           <div class="recall-row">
-            <div class="r-num">1</div><input class="inp" id="del1" type="text" placeholder="First word...">
+            <div class="r-num">1</div><input class="inp" id="del1" type="text" placeholder="First word..."
+              autocomplete="off">
           </div>
           <div class="recall-row">
-            <div class="r-num">2</div><input class="inp" id="del2" type="text" placeholder="Second word...">
+            <div class="r-num">2</div><input class="inp" id="del2" type="text" placeholder="Second word..."
+              autocomplete="off">
           </div>
           <div class="recall-row">
             <div class="r-num">3</div><input class="inp" id="del3" type="text"
-              placeholder="Third word... (type 'forgot' if unsure)">
+              placeholder="Third word... (type 'forgot' if unsure)" autocomplete="off">
           </div>
         </div>
       </div>
@@ -1260,7 +1262,7 @@
 
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.maxAlternatives = 1;
       recognition.continuous = false;
 
@@ -1272,20 +1274,28 @@
       statusEl.textContent = '🎙️ Listening for word ' + slot + '… say the word now!';
 
       recognition.onresult = function (event) {
-        const transcript = event.results[0][0].transcript.trim();
-        const word = transcript.split(/\s+/)[0].replace(/[^a-zA-Z]/g, '');
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        const word = transcript.trim().split(/\s+/)[0].replace(/[^a-zA-Z]/g, '');
 
-        if (word) {
+        if (word && word.length >= 2) {
           const display = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
           resultEl.textContent = display;
           resultEl.dataset.value = word.toLowerCase();
           resultEl.style.color = 'var(--plum)';
           resultEl.style.borderColor = 'var(--plum)';
           statusEl.textContent = '✅ Word ' + slot + ' recorded: "' + display + '"';
-        } else {
-          statusEl.textContent = '⚠️ Could not understand. Press the mic to try again.';
+
+          // Save to answer object A
+          A['imm' + slot] = word.toLowerCase();
+          A['del' + slot] = word.toLowerCase();
+
+          // Force stop immediately
+          sttStopping = true;
+          try { recognition.abort(); } catch (e) { }
         }
-        // Don't call recognition.stop() here — let continuous:false auto-stop
       };
 
       recognition.onerror = function (event) {
@@ -1459,7 +1469,7 @@
 
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.maxAlternatives = 1;
       recognition.continuous = false;
 
@@ -1475,31 +1485,50 @@
 
       const resultEl = document.getElementById('phrase-stt-result');
 
+      let phraseInterim = '';
       recognition.onresult = function (event) {
-        const transcript = event.results[0][0].transcript.trim();
-        if (transcript) {
-          resultEl.textContent = transcript;
-          resultEl.dataset.value = transcript.toLowerCase();
-          resultEl.style.color = 'var(--teal)';
-          resultEl.style.borderColor = 'var(--teal)';
-          statusEl.textContent = '✅ Phrase recorded: "' + transcript + '"';
-        } else {
-          statusEl.textContent = '⚠️ Could not understand. Press mic to try again.';
+        let interimText = '';
+        let finalText = '';
+
+        for (let i = 0; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalText += event.results[i][0].transcript;
+          } else {
+            interimText += event.results[i][0].transcript;
+          }
+        }
+
+        phraseInterim = (finalText || interimText).trim();
+
+        if (interimText) {
+          resultEl.textContent = interimText;
+          resultEl.style.color = 'var(--txt)';
+          resultEl.style.borderColor = 'var(--border)';
+          statusEl.textContent = '🎙️ Hearing: "' + interimText + '"…';
+        }
+
+        if (finalText && finalText.trim().length >= 3) {
+          const text = finalText.trim();
+          commitPhrase(text);
+          try { recognition.abort(); } catch (e) { }
         }
       };
 
-      recognition.onerror = function (event) {
-        if (event.error === 'aborted') return;
-        if (event.error === 'no-speech') {
-          statusEl.textContent = '⚠️ No speech detected. Press mic and speak.';
-        } else if (event.error === 'not-allowed') {
-          statusEl.textContent = '⚠️ Microphone access denied.';
-        } else {
-          statusEl.textContent = '⚠️ Error: ' + event.error;
-        }
-      };
+      function commitPhrase(text) {
+        if (!text || text.length < 3) return;
+        resultEl.textContent = text;
+        resultEl.dataset.value = text.toLowerCase();
+        resultEl.style.color = 'var(--teal)';
+        resultEl.style.borderColor = 'var(--teal)';
+        statusEl.textContent = '✅ Phrase recorded: "' + text + '"';
+        A['lang-phrase'] = text;
+        console.log('[STT] Phrase committed:', text);
+      }
 
       recognition.onend = function () {
+        if (!A['lang-phrase'] && phraseInterim.length >= 3) {
+          commitPhrase(phraseInterim);
+        }
         btn.style.background = 'var(--bg-2)';
         btn.style.borderColor = 'var(--teal)';
         btn.querySelector('span:last-child').style.color = 'var(--teal)';
@@ -1708,7 +1737,12 @@
       if (has(A['lang-o1'], ['watch', 'clock', 'wristwatch'])) lang++;
       if (has(A['lang-o2'], ['pen', 'pencil', 'marker'])) lang++;
       const phrase = nm(A['lang-phrase'] || '');
-      if (phrase.includes('noifs') || phrase.includes('ifsands') || phrase === nm('No ifs ands or buts')) lang++;
+      const isPhraseMatch = phrase.includes('noifs') ||
+        phrase.includes('ifsands') ||
+        phrase.includes('andsbuts') ||
+        phrase.includes('noifandorbut') ||
+        phrase === nm('No ifs ands or buts');
+      if (isPhraseMatch) lang++;
       const cmdDone = ['cmd1', 'cmd2', 'cmd3'].filter(k => CK[k]).length;
       lang += cmdDone >= 3 ? 2 : cmdDone >= 1 ? 1 : 0;
 
@@ -1839,23 +1873,33 @@
         (has(A['lang-o1'], ['watch', 'clock', 'wristwatch']) ? 1 : 0) +
         (has(A['lang-o2'], ['pen', 'pencil', 'marker']) ? 1 : 0);
       const phraseStr = nm(A['lang-phrase'] || '');
-      const phraseMatch = phraseStr.includes('noifs') || phraseStr.includes('ifsands') || phraseStr === nm('No ifs ands or buts');
+      const phraseMatch = phraseStr.includes('noifs') ||
+        phraseStr.includes('ifsands') ||
+        phraseStr.includes('andsbuts') ||
+        phraseStr.includes('noifandorbut') ||
+        phraseStr.includes('ifandbut') ||
+        phraseStr === nm('No ifs ands or buts');
+
+      console.log('--- Clinical Matching Debug ---');
+      console.log('Raw Phrase Heard:', A['lang-phrase']);
+      console.log('Cleaned Phrase:', phraseStr);
+      console.log('Match Success:', phraseMatch);
 
       const softwareFeatures = {
-        immediate_recall: s.immMem / 3,                                        // 0–1
-        delayed_recall: s.delMem / 3,                                        // 0–1
+        immediate_recall: s.immMem,                                            // raw 0–3
+        delayed_recall: s.delMem,                                              // raw 0–3
         cue_benefit_index: (s.immMem > 0 && s.delMem > 0) ? Math.min(1, s.delMem / s.immMem) : 0.5,
         retention_ratio: s.immMem > 0 ? Math.min(1, s.delMem / s.immMem) : 0.5,
-        orientation_score: s.ori / 5,                                           // 0–1
-        serial7s_score: s.attn / 5,                                          // 0–1
-        clock_drawing_score: s.exec / 5,                                          // 0–1
-        reaction_time_ms: 700,                                                 // default (updated below if N-Back played)
-        error_consistency_norm: 0.2,                                                 // default (updated below if Memory played)
-        naming_task_score: namingCorrect / 2,                                   // 0–1
-        sentence_repetition_score: phraseMatch ? 1.0 : 0.0,
-        verbal_fluency_wpm: (s.lang / 5) * 14,                                   // mapped to ~WPM
+        orientation_score: s.ori,                                               // raw 0–5
+        serial7s_score: s.attn,                                              // raw 0–5
+        clock_drawing_score: s.exec,                                              // raw 0–5
+        reaction_time_ms: null,                                                // set by N-Back game
+        error_consistency_norm: null,                                          // set by Memory game
+        naming_task_score: namingCorrect,                                       // raw 0–2
+        sentence_repetition_score: phraseMatch ? 1 : 0,                        // raw 0–1
+        verbal_fluency_wpm: (s.lang / 5) * 15,                                   // raw estimate
         iadl_impairment_count: s.iadlC,                                             // raw 0–6
-        mood_filter: s.moodYes >= 2 ? 1 : 0
+        mood_filter: s.moodYes >= 2 ? 1 : 0                                     // raw 0–1
       };
 
       console.log('[ML] Computed 14 software features:', softwareFeatures);
@@ -1891,7 +1935,7 @@
         });
       });
 
-      // Also tell the backend (for server-side ML prediction)
+      // Also tell the backend (to save questionnaire scores)
       fetch('/update_scores', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1901,55 +1945,26 @@
           behavioural_raw: s.beh
         })
       }).then(v => v.json()).then(res => {
-        // Update Firebase with ML prediction if backend returned one
-        if (res.mlPrediction !== undefined) {
-          window._fbReady.then(function (saveScores) {
-            saveScores({ mlPrediction: res.mlPrediction });
-          });
-        }
 
-        // ═══════ SEND TO RENDER ML MODEL ═══════
-        // Done sequentially to avoid Flask session write race conditions
+        // ═══════ SEND SOFTWARE FEATURES TO BACKEND ═══════
+        // Save software features to backend for later use when hardware data arrives.
+        // ML prediction will NOT run until ESP32 hardware parameters are received.
         const deviceId = sessionStorage.getItem('nb_device_id') || '';
         const payload = { ...softwareFeatures, device_id: deviceId };
-        const renderApiUrl = '/api/render_predict'; // routes through app.py
 
-        fetch(renderApiUrl, {
+        // Save software features to the backend session (no ML prediction yet)
+        fetch('/api/save_software_features', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        }).then(v => v.json()).then(mlRes => {
-          console.log('[ML] Render prediction (device:', deviceId, ', hw_used:', mlRes.hardware_used, '):', mlRes);
+        }).then(v => v.json()).then(saveRes => {
+          console.log('[ML] Software features saved for later hardware-combined prediction:', saveRes);
 
-          // Use Render result if available, otherwise use local fallback
-          const prediction = mlRes.used_render ? mlRes.render_result : mlRes.local_result;
-          if (!prediction) return;
-
-          // Add ML prediction flag to the results page
-          const mlFlag = document.createElement('div');
-          mlFlag.className = 'fi fi-' + (prediction.risk_level === 'Normal' ? 'ok' : prediction.risk_level === 'Mild Risk' ? 'warn' : 'alert');
-          mlFlag.innerHTML = `<span>🤖</span><span><strong>ML Model Prediction:</strong> ${prediction.risk_level} (Risk Score: ${prediction.risk_score}/100). Method: ${prediction.method || (mlRes.used_render ? 'Render API' : 'Local Engine')}. ${prediction.recommendation || ''}</span>`;
-          document.getElementById('flags-list').appendChild(mlFlag);
-
-          // Add domain score cards from ML
-          if (prediction.domain_scores) {
-            const domColors = { memory: 'plum', reasoning: 'amber', visuospatial: 'sage', language: 'teal', behavior: 'coral' };
-            const domGrid = document.getElementById('scores-grid');
-            Object.entries(prediction.domain_scores).forEach(([dom, score]) => {
-              const dc = document.createElement('div'); dc.className = 'sc';
-              dc.style.borderColor = 'rgba(124,95,138,.2)';
-              dc.innerHTML = `<div class="sc-lbl">ML: ${dom.charAt(0).toUpperCase() + dom.slice(1)}</div><div class="sc-val" style="color:${colors[domColors[dom]] || 'var(--plum)'}">${score}<span style="font-size:13px;color:var(--txt-l);font-family:'Plus Jakarta Sans',sans-serif"> /100</span></div><div class="sc-bar"><div class="sc-bar-fill" style="background:${colors[domColors[dom]] || 'var(--plum)'};width:${Math.min(score, 100)}%"></div></div>`;
-              domGrid.appendChild(dc);
-            });
-          }
-
-          // Save ML prediction via promise (always resolves)
-          window._fbReady.then(function (saveScores) {
-            saveScores({
-              mlPrediction: prediction.risk_score,
-              mlRiskLevel: prediction.risk_level
-            });
-          });
-        }).catch(err => { console.warn('[ML] Render predict failed:', err); });
+          // Add info flag to results page
+          const infoFlag = document.createElement('div');
+          infoFlag.className = 'fi fi-ok';
+          infoFlag.innerHTML = `<span>📡</span><span><strong>Software parameters saved.</strong> ML prediction will be generated once hardware sensor data (IMU, PPG, EEG) is received from the ESP32 device.</span>`;
+          document.getElementById('flags-list').appendChild(infoFlag);
+        }).catch(err => { console.warn('[ML] Save software features failed:', err); });
 
       }).catch(() => { });
     }
