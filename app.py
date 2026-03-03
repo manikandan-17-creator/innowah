@@ -96,52 +96,57 @@ def find_user_by_device_id(device_id):
 
 
 def save_hw_params_to_firestore(uid, hardware_data):
-    """Save the 15 hardware parameters to the user's Firestore document."""
+    """Save the hardware parameters to the user's Firestore document using deep merge."""
     if not firestore_db or not uid:
         return False
     try:
-        imu = hardware_data.get('imu', {})
-        ppg = hardware_data.get('ppg', {})
-        eeg = hardware_data.get('eeg', {})
-        temp = hardware_data.get('temperature', {})
+        # Build path-based update dictionary for deep merging
+        updates = {}
+        
+        # ── IMU ──
+        if 'imu' in hardware_data:
+            imu = hardware_data['imu']
+            for k in ['gait_speed', 'stride_variability', 'turning_velocity', 'postural_sway', 'step_count']:
+                if k in imu and imu[k] is not None:
+                    updates[f'hw_params.imu.{k}'] = imu[k]
+                    
+        # ── PPG ──
+        if 'ppg' in hardware_data:
+            ppg = hardware_data['ppg']
+            for k in ['heart_rate', 'spo2', 'rmssd', 'sdnn', 'lf_hf_ratio', 'desat_events']:
+                if k in ppg and ppg[k] is not None:
+                    updates[f'hw_params.ppg.{k}'] = ppg[k]
+                    
+        # ── EEG ──
+        if 'eeg' in hardware_data:
+            eeg = hardware_data['eeg']
+            for k in ['alpha_power', 'theta_power', 'delta_power', 'theta_alpha_ratio', 'dominant_frequency']:
+                if k in eeg and eeg[k] is not None:
+                    updates[f'hw_params.eeg.{k}'] = eeg[k]
+                    
+        # ── Temperature ──
+        if 'temperature' in hardware_data:
+            temp = hardware_data['temperature']
+            if 'skin_temp' in temp and temp['skin_temp'] is not None:
+                updates['hw_params.temperature.skin_temp'] = temp['skin_temp']
 
-        hw_params = {
-            'imu': {
-                'gait_speed': imu.get('gait_speed'),
-                'stride_variability': imu.get('stride_variability'),
-                'turning_velocity': imu.get('turning_velocity'),
-                'postural_sway': imu.get('postural_sway'),
-                'step_count': imu.get('step_count'),
-            },
-            'ppg': {
-                'heart_rate': ppg.get('heart_rate'),
-                'spo2': ppg.get('spo2'),
-                'rmssd': ppg.get('rmssd'),
-                'sdnn': ppg.get('sdnn'),
-                'lf_hf_ratio': ppg.get('lf_hf_ratio'),
-                'desat_events': ppg.get('desat_events', 0),
-            },
-            'eeg': {
-                'alpha_power': eeg.get('alpha_power'),
-                'theta_power': eeg.get('theta_power'),
-                'delta_power': eeg.get('delta_power'),
-                'theta_alpha_ratio': eeg.get('theta_alpha_ratio'),
-                'dominant_frequency': eeg.get('dominant_frequency'),
-            },
-            'temperature': {
-                'skin_temp': temp.get('skin_temp'),
-            },
-            'lastUpdated': firestore.SERVER_TIMESTAMP
-        }
+        if not updates:
+            return True
 
-        firestore_db.collection('users').document(uid).set(
-            {'hw_params': hw_params}, merge=True
-        )
-        logger.info(f"[Firestore] ✅ Hardware params saved for user {uid}")
+        updates['hw_params.lastUpdated'] = firestore.SERVER_TIMESTAMP
+
+        # Use update() to perform deep merge via dot notation
+        firestore_db.collection('users').document(uid).update(updates)
+        logger.info(f"[Firestore] ✅ Deep hardware params update for user {uid}")
         return True
     except Exception as e:
-        logger.warning(f"[Firestore] Error saving hw_params for {uid}: {e}")
-        return False
+        logger.warning(f"[Firestore] Update failed ({e}), attempting fallback set...")
+        try:
+             firestore_db.collection('users').document(uid).set({'hw_params': hardware_data}, merge=True)
+             return True
+        except Exception as e2:
+            logger.error(f"[Firestore] Fallback also failed: {e2}")
+            return False
 
 
 def save_sw_params_to_firestore(uid, software_data):
@@ -881,9 +886,29 @@ def receive_hardware_data():
         return jsonify({"status": "error", "message": "device_id is required"}), 400
 
     # ── 1. Store in RAM for live dashboard ─────────────────────────────────
+    # We merge incoming data with the previous reading to prevent parameters from "vanishing"
+    # when different devices (wristwatch vs headband) send their specific sensor blocks.
+    last_readings = hardware_sessions.get(device_id, [])
+    latest_hw = {}
+    if last_readings:
+        # Deep copy the latest hardware state to avoid modifying previous readings in history
+        old_hw = last_readings[-1]["hardware"]
+        latest_hw = {k: (v.copy() if isinstance(v, dict) else v) for k, v in old_hw.items()}
+
+    # Merge incoming data blocks (imu, ppg, eeg, temperature)
+    for block in ["imu", "ppg", "eeg", "temperature"]:
+        if block in data:
+            if block not in latest_hw:
+                latest_hw[block] = {}
+            latest_hw[block].update(data[block])
+
+    # Also update the top-level fields (device_id, timestamp)
+    latest_hw["device_id"] = device_id
+    latest_hw["timestamp"] = data.get("timestamp", 0)
+
     reading = {
         "timestamp": datetime.utcnow().isoformat(),
-        "hardware":  data
+        "hardware":  latest_hw
     }
 
     if device_id not in hardware_sessions:
