@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroMind+ — Dementia Screening</title>
+    <title>NeuroMind+ — Alzheimer Screening</title>
     <link rel="stylesheet" href="static/index_style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -20,7 +20,7 @@
                 <div class="logo-mark">🧠</div>
                 <div>
                     <div class="logo-name">Neuro<span>Band+</span></div>
-                    <div class="logo-tagline">Dementia Screening Platform</div>
+                    <div class="logo-tagline">Alzheimer Screening Platform</div>
                 </div>
             </a>
             <div class="header-right">
@@ -51,7 +51,7 @@
                     </div>
                     <h1>Your <em>Cognitive Health</em><br>at a Glance</h1>
                     <p class="hero-desc">
-                        Complete all three assessments to generate your detailed dementia screening analysis in real
+                        Complete all three assessments to generate your detailed Alzheimer screening analysis in real
                         time.
                     </p>
                 </div>
@@ -236,7 +236,7 @@
                     <div class="result-score-wrap">
                         <div class="result-score-label">ML Prediction</div>
                         <div class="result-score-num" id="final">--</div>
-                        <div class="result-score-unit">Dementia Risk Score (%)</div>
+                        <div class="result-score-unit">Alzheimer Risk Score (%)</div>
                     </div>
 
                     <!-- Risk bar -->
@@ -316,10 +316,10 @@
                         <div class="hm-value" id="hw-gait">--</div>
                         <div class="hm-label">Gait Speed (m/s)</div>
                     </div>
-                    <div class="hw-metric-card hm-temp">
-                        <div class="hm-icon">🌡️</div>
-                        <div class="hm-value" id="hw-temp">--</div>
-                        <div class="hm-label">Skin Temp (°C)</div>
+                    <div class="hw-metric-card hm-eeg">
+                        <div class="hm-icon">〰️</div>
+                        <div class="hm-value" id="hw-dom-freq">--</div>
+                        <div class="hm-label">Dominant Freq (Hz)</div>
                     </div>
                     <div class="hw-metric-card hm-steps">
                         <div class="hm-icon">👣</div>
@@ -982,12 +982,11 @@
                     const ppg = hw.ppg || {};
                     const eeg = hw.eeg || {};
                     const imu = hw.imu || {};
-                    const temp = hw.temperature || {};
                     document.getElementById('hw-hr').textContent = ppg.heart_rate != null ? ppg.heart_rate : '--';
                     document.getElementById('hw-spo2').textContent = ppg.spo2 != null ? ppg.spo2 : '--';
                     document.getElementById('hw-alpha').textContent = eeg.alpha_power != null ? Math.round(eeg.alpha_power * 10) / 10 : '--';
                     document.getElementById('hw-gait').textContent = imu.gait_speed != null ? imu.gait_speed : '--';
-                    document.getElementById('hw-temp').textContent = temp.skin_temp != null ? temp.skin_temp : '--';
+                    document.getElementById('hw-dom-freq').textContent = eeg.dominant_frequency != null ? Math.round(eeg.dominant_frequency * 10) / 10 : '--';
                     document.getElementById('hw-steps').textContent = imu.step_count != null ? imu.step_count : '--';
                     document.getElementById('hw-status-text').textContent = 'Device Online';
                     document.getElementById('hw-status-pill').classList.add('hw-online');

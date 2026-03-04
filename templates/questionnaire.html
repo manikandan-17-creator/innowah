@@ -1855,7 +1855,7 @@
       // Flags
       const flags = [];
       if (s.moodYes >= 2) flags.push({ t: 'warn', i: '💜', m: 'Mood filter positive — 2 or more mood indicators reported. A depression evaluation is recommended as mood can affect cognitive test performance.' });
-      if (s.progression) flags.push({ t: 'alert', i: '📈', m: 'Gradual symptom progression reported — a key indicator used in dementia risk classification.' });
+      if (s.progression) flags.push({ t: 'alert', i: '📈', m: 'Gradual symptom progression reported — a key indicator used in Alzheimer risk classification.' });
       if (s.iadlC >= 2) flags.push({ t: 'alert', i: '🏠', m: `${s.iadlC} instrumental daily-life difficulties reported. Functional impairment is a significant factor in the final risk classification.` });
       if (s.badlC > 0) flags.push({ t: 'alert', i: '🤝', m: `${s.badlC} basic care activities require assistance, indicating more advanced functional decline.` });
       if (s.cognitive >= 26) flags.push({ t: 'ok', i: '✅', m: 'Cognitive total is within the normal range (26–30). All major domains tested within normal limits.' });
